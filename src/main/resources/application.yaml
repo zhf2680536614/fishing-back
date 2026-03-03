@@ -1,3 +1,34 @@
 spring:
   application:
     name: Fishing
+  datasource:
+    url: jdbc:mysql://localhost:3307/fish_club_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: root
+    password: zhf160814..tey
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+# MyBatis-Plus配置
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      logic-delete-field: isDeleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+      id-type: assign_id
+
+# 豆包大模型配置
+doubao:
+  api:
+    key: "c4b98605-14f2-405d-b2e4-ef4edd610298"
+    url: "https://ark.cn-beijing.volces.com/api/v3/responses"
+  model:
+    name: "doubao-seed-1-8-251228"
+
+# 服务器配置
+server:
+  port: 8080
+  servlet:
+    context-path: /api
