@@ -16,10 +16,16 @@ public class DoubaoConfig {
     private String apiKey;
     
     /**
-     * 豆包 API 地址
+     * 豆包 API 地址（responses 端点）
      */
-    @Value("${doubao.api.url:https://ark.cn-beijing.volces.com/api/v3/chat/completions}")
+    @Value("${doubao.api.url:https://ark.cn-beijing.volces.com/api/v3/responses}")
     private String apiUrl;
+    
+    /**
+     * 豆包流式输出 API 地址（chat/completions 端点）
+     */
+    @Value("${doubao.api.stream-url:https://ark.cn-beijing.volces.com/api/v3/chat/completions}")
+    private String streamApiUrl;
     
     /**
      * 模型名称
@@ -41,6 +47,14 @@ public class DoubaoConfig {
 
     public void setApiUrl(String apiUrl) {
         this.apiUrl = apiUrl;
+    }
+
+    public String getStreamApiUrl() {
+        return streamApiUrl;
+    }
+
+    public void setStreamApiUrl(String streamApiUrl) {
+        this.streamApiUrl = streamApiUrl;
     }
 
     public String getModelName() {

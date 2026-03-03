@@ -127,8 +127,20 @@ public class AirForceServiceImpl extends ServiceImpl<PostMapper, PostEntity> imp
         long weekCount = this.count(weekWrapper);
         stats.setWeekAirForce((int) weekCount);
 
-        // 空军率（模拟数据，实际应该根据总钓鱼次数计算）
-        stats.setAirForceRate(32);
+        // 空军率 = 空军帖子数 / (空军帖子数 + 鱼获战报帖子数) * 100
+        LambdaQueryWrapper<PostEntity> airForceWrapper = new LambdaQueryWrapper<>();
+        airForceWrapper.eq(PostEntity::getType, 1)
+                .eq(PostEntity::getIsDeleted, 0);
+        long airForceTotal = this.count(airForceWrapper);
+
+        LambdaQueryWrapper<PostEntity> catchWrapper = new LambdaQueryWrapper<>();
+        catchWrapper.eq(PostEntity::getType, 0)
+                .eq(PostEntity::getIsDeleted, 0);
+        long catchTotal = this.count(catchWrapper);
+
+        long totalPosts = airForceTotal + catchTotal;
+        int airForceRate = totalPosts > 0 ? (int) ((airForceTotal * 100) / totalPosts) : 0;
+        stats.setAirForceRate(airForceRate);
 
         // 最长连续空军天数（模拟数据）
         stats.setMaxStreak(7);

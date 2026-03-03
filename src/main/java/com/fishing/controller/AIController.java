@@ -1,0 +1,36 @@
+package com.fishing.controller;
+
+import com.fishing.service.AIService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import java.util.Map;
+
+/**
+ * AI 控制器
+ */
+@RestController
+@RequestMapping("/ai")
+@Slf4j
+public class AIController {
+
+    private final AIService aiService;
+
+    public AIController(AIService aiService) {
+        this.aiService = aiService;
+    }
+
+    /**
+     * AI 对话 - 流式输出
+     * @param request 请求体，包含 message
+     * @return SseEmitter 流式响应
+     */
+    @PostMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter chat(@RequestBody Map<String, String> request) {
+        String message = request.get("message");
+        log.info("收到 AI 对话请求: {}", message);
+        return aiService.chat(message);
+    }
+}
