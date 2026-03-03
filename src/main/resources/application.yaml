@@ -1,11 +1,18 @@
 spring:
   application:
     name: Fishing
+  profiles:
+    active: zhf
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 50MB
+      enabled: true
   datasource:
-    url: jdbc:mysql://localhost:3307/fish_club_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-    username: root
-    password: zhf160814..tey
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${spring.datasource.url}
+    username: ${spring.datasource.username}
+    password: ${spring.datasource.password}
+    driver-class-name: ${spring.datasource.driver-class-name}
 
 # MyBatis-Plus配置
 mybatis-plus:
@@ -22,13 +29,25 @@ mybatis-plus:
 # 豆包大模型配置
 doubao:
   api:
-    key: "c4b98605-14f2-405d-b2e4-ef4edd610298"
-    url: "https://ark.cn-beijing.volces.com/api/v3/responses"
+    key: ${doubao.api.key}
+    url: ${doubao.api.url}
   model:
-    name: "doubao-seed-1-8-251228"
+    name: ${doubao.model.name}
 
 # 服务器配置
 server:
-  port: 8080
+  port: ${server.port}
   servlet:
-    context-path: /api
+    context-path: ${server.servlet.context-path}
+
+# MinIO 配置
+minio:
+  endpoint: ${minio.endpoint}
+  access-key: ${minio.access-key}
+  secret-key: ${minio.secret-key}
+  bucket: ${minio.bucket}
+
+# 文件访问配置
+file:
+  base-url: ${file.base-url}
+  post-image-dir: ${file.post-image-dir}

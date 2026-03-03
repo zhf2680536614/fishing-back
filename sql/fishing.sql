@@ -73,6 +73,7 @@ CREATE TABLE `biz_post` (
     `comment_count` int DEFAULT 0 COMMENT '评论量',
     `ai_audit_status` tinyint DEFAULT 1 COMMENT 'AI审核状态: 0-违规, 1-正常, 2-疑似',
     `ai_audit_reason` varchar(255) DEFAULT NULL COMMENT 'AI审核反馈原因',
+    `ai_comment` varchar(500) DEFAULT NULL COMMENT 'AI安慰语（空军帖子专用）',
     `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
     `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `is_deleted` tinyint DEFAULT 0,

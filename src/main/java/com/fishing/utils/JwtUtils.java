@@ -6,7 +6,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 
-import java.security.Key;
+import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,7 +29,7 @@ public class JwtUtils {
         claims.put("timestamp", new Date());
 
         // 生成密钥
-        Key key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
+        SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
 
         // 构建JWT令牌
         String token = Jwts.builder()
@@ -44,8 +44,8 @@ public class JwtUtils {
     // 解析JWT令牌
     public static Claims parseToken(String token) {
         try {
-            Key key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
-            return Jwts.parserBuilder()
+            SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
+            return Jwts.parser()
                     .setSigningKey(key)
                     .build()
                     .parseClaimsJws(token)
@@ -60,7 +60,12 @@ public class JwtUtils {
     public static Long getUserIdFromToken(String token) {
         Claims claims = parseToken(token);
         if (claims != null) {
-            return claims.get("userId", Long.class);
+            Object userId = claims.get("userId");
+            if (userId instanceof Integer) {
+                return ((Integer) userId).longValue();
+            } else if (userId instanceof Long) {
+                return (Long) userId;
+            }
         }
         return null;
     }
@@ -77,8 +82,8 @@ public class JwtUtils {
     // 验证令牌是否有效
     public static boolean validateToken(String token) {
         try {
-            Key key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
-            Jwts.parserBuilder()
+            SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
+            Jwts.parser()
                     .setSigningKey(key)
                     .build()
                     .parseClaimsJws(token);
