@@ -55,13 +55,13 @@ public interface PostMapper extends BaseMapper<PostEntity> {
      * @param endDate 结束日期
      * @return 每日鱼获重量列表
      */
-    @Select("SELECT DATE(create_time) as date, COALESCE(SUM(fish_weight), 0) as weight " +
+    @Select("SELECT DATE_FORMAT(create_time, '%Y-%m-%d') as date, COALESCE(SUM(fish_weight), 0) as weight " +
             "FROM biz_post " +
             "WHERE user_id = #{userId} " +
             "AND is_deleted = 0 " +
             "AND type = 0 " +
             "AND DATE(create_time) BETWEEN #{startDate} AND #{endDate} " +
-            "GROUP BY DATE(create_time) " +
+            "GROUP BY DATE_FORMAT(create_time, '%Y-%m-%d') " +
             "ORDER BY date")
     List<Map<String, Object>> selectDailyFishWeight(@Param("userId") Long userId,
                                                     @Param("startDate") String startDate,

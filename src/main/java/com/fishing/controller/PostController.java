@@ -38,9 +38,12 @@ public class PostController {
      * 获取战报帖子列表
      */
     @GetMapping("/list")
-    public Result<List<PostVO>> getPostList(@RequestParam(defaultValue = "0") Integer type) {
-        log.info("获取帖子列表，类型：{}", type);
-        List<PostVO> list = postService.getPostList(type);
+    public Result<List<PostVO>> getPostList(
+            @RequestParam(defaultValue = "0") Integer type,
+            @RequestParam(defaultValue = "1") Integer pageNum,
+            @RequestParam(defaultValue = "10") Integer pageSize) {
+        log.info("获取帖子列表，类型：{}，页码：{}，每页数量：{}", type, pageNum, pageSize);
+        List<PostVO> list = postService.getPostList(type, pageNum, pageSize);
         return Result.success(list);
     }
 

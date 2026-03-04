@@ -1,6 +1,8 @@
 package com.fishing.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fishing.mapper.PostLikeMapper;
 import com.fishing.mapper.PostMapper;
@@ -89,15 +91,17 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, PostEntity> impleme
     }
 
     @Override
-    public List<PostVO> getPostList(Integer type) {
-        List<PostEntity> list = postMapper.selectList(
+    public List<PostVO> getPostList(Integer type, Integer pageNum, Integer pageSize) {
+        // 使用 MyBatis-Plus 分页
+        Page<PostEntity> page = new Page<>(pageNum, pageSize);
+        IPage<PostEntity> resultPage = postMapper.selectPage(page,
                 new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<PostEntity>()
                         .eq(PostEntity::getType, type)
                         .eq(PostEntity::getIsDeleted, 0)
                         .orderByDesc(PostEntity::getCreateTime)
         );
 
-        return list.stream().map(this::convertToVO).collect(Collectors.toList());
+        return resultPage.getRecords().stream().map(this::convertToVO).collect(Collectors.toList());
     }
 
     @Override
