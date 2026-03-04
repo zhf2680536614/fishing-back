@@ -6,7 +6,7 @@ import com.fishing.pojo.entity.GearMarketEntity;
 import com.fishing.pojo.vo.GearMarketVO;
 
 public interface GearMarketService {
-    Page<GearMarketVO> page(int pageNum, int pageSize, String category, String keyword);
+    Page<GearMarketVO> page(int pageNum, int pageSize, String category, String keyword, String sortBy);
     GearMarketVO getById(Long id);
     void save(GearMarketDTO dto, Long userId);
     void update(Long id, GearMarketDTO dto, Long userId);

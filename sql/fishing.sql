@@ -246,3 +246,44 @@ CREATE TABLE `biz_review_comment` (
     PRIMARY KEY (`id`),
     KEY `idx_review_id` (`review_id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '测评评论表';
+
+-- 表：订单表
+DROP TABLE IF EXISTS `biz_order`;
+
+CREATE TABLE `biz_order` (
+    `id` bigint NOT NULL AUTO_INCREMENT COMMENT '订单ID',
+    `user_id` bigint NOT NULL COMMENT '用户ID',
+    `gear_id` bigint NOT NULL COMMENT '装备ID',
+    `gear_title` varchar(255) NOT NULL COMMENT '装备标题',
+    `gear_price` decimal(10, 2) NOT NULL COMMENT '装备价格',
+    `total_amount` decimal(10, 2) NOT NULL COMMENT '总金额',
+    `status` int NOT NULL DEFAULT '0' COMMENT '订单状态：0-待付款，1-已付款，2-已发货，3-已完成，4-已取消',
+    `address` varchar(500) NOT NULL COMMENT '收货地址',
+    `contact_phone` varchar(20) NOT NULL COMMENT '联系电话',
+    `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `is_deleted` int NOT NULL DEFAULT '0' COMMENT '是否删除',
+    PRIMARY KEY (`id`),
+    KEY `idx_user_id` (`user_id`),
+    KEY `idx_gear_id` (`gear_id`)
+) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COMMENT = '订单表';
+
+-- 表：用户收货地址表
+DROP TABLE IF EXISTS `biz_user_address`;
+
+CREATE TABLE `biz_user_address` (
+    `id` bigint NOT NULL AUTO_INCREMENT COMMENT '地址ID',
+    `user_id` bigint NOT NULL COMMENT '用户ID',
+    `name` varchar(50) NOT NULL COMMENT '收货人姓名',
+    `phone` varchar(20) NOT NULL COMMENT '联系电话',
+    `province` varchar(50) NOT NULL COMMENT '省份',
+    `city` varchar(50) NOT NULL COMMENT '城市',
+    `district` varchar(50) NOT NULL COMMENT '区县',
+    `detail_address` varchar(200) NOT NULL COMMENT '详细地址',
+    `is_default` tinyint NOT NULL DEFAULT '0' COMMENT '是否默认地址：0-否，1-是',
+    `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `is_deleted` tinyint NOT NULL DEFAULT '0' COMMENT '是否删除',
+    PRIMARY KEY (`id`),
+    KEY `idx_user_id` (`user_id`)
+) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COMMENT = '用户收货地址表';

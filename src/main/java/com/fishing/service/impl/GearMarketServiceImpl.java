@@ -27,7 +27,7 @@ public class GearMarketServiceImpl implements GearMarketService {
     private final Gson gson = new Gson();
 
     @Override
-    public Page<GearMarketVO> page(int pageNum, int pageSize, String category, String keyword) {
+    public Page<GearMarketVO> page(int pageNum, int pageSize, String category, String keyword, String sortBy) {
         LambdaQueryWrapper<GearMarketEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(GearMarketEntity::getIsDeleted, 0);
         queryWrapper.eq(GearMarketEntity::getStatus, 0);
@@ -35,9 +35,19 @@ public class GearMarketServiceImpl implements GearMarketService {
             queryWrapper.eq(GearMarketEntity::getCategory, category);
         }
         if (keyword != null && !keyword.isEmpty()) {
-            queryWrapper.like(GearMarketEntity::getTitle, keyword);
+            queryWrapper.like(GearMarketEntity::getTitle, keyword)
+                    .or().like(GearMarketEntity::getDescription, keyword);
         }
-        queryWrapper.orderByDesc(GearMarketEntity::getCreateTime);
+        
+        // 排序逻辑
+        if ("price_asc".equals(sortBy)) {
+            queryWrapper.orderByAsc(GearMarketEntity::getPrice);
+        } else if ("price_desc".equals(sortBy)) {
+            queryWrapper.orderByDesc(GearMarketEntity::getPrice);
+        } else {
+            // 默认按最新发布排序
+            queryWrapper.orderByDesc(GearMarketEntity::getCreateTime);
+        }
 
         Page<GearMarketEntity> page = gearMarketMapper.selectPage(new Page<>(pageNum, pageSize), queryWrapper);
         Page<GearMarketVO> voPage = new Page<>(page.getCurrent(), page.getSize(), page.getTotal());
@@ -125,6 +135,7 @@ public class GearMarketServiceImpl implements GearMarketService {
             vo.setUsername(user.getUsername());
             vo.setNickname(user.getNickname());
             vo.setAvatar(minioUtils.getFullUrl(user.getAvatar(), "user_avatar"));
+            vo.setPhone(user.getPhone());
         }
         
         vo.setTitle(entity.getTitle());
