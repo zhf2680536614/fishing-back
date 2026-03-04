@@ -30,8 +30,9 @@ public class GearReviewController {
     }
 
     @GetMapping("/{id}")
-    public Result<GearReviewVO> getById(@PathVariable Long id) {
-        GearReviewVO vo = gearReviewService.getById(id);
+    public Result<GearReviewVO> getById(@PathVariable String id) {
+        Long reviewId = Long.parseLong(id);
+        GearReviewVO vo = gearReviewService.getById(reviewId);
         return Result.success(vo);
     }
 
@@ -55,27 +56,6 @@ public class GearReviewController {
         Long userId = getCurrentUserId(request);
         gearReviewService.delete(id, userId);
         return Result.success();
-    }
-
-    @PostMapping("/{id}/like")
-    public Result<Void> like(@PathVariable Long id, HttpServletRequest request) {
-        Long userId = getCurrentUserId(request);
-        gearReviewService.like(id, userId);
-        return Result.success();
-    }
-
-    @DeleteMapping("/{id}/like")
-    public Result<Void> unlike(@PathVariable Long id, HttpServletRequest request) {
-        Long userId = getCurrentUserId(request);
-        gearReviewService.unlike(id, userId);
-        return Result.success();
-    }
-
-    @GetMapping("/{id}/is-liked")
-    public Result<Boolean> isLiked(@PathVariable Long id, HttpServletRequest request) {
-        Long userId = getCurrentUserId(request);
-        boolean isLiked = gearReviewService.isLiked(id, userId);
-        return Result.success(isLiked);
     }
 
     private Long getCurrentUserId(HttpServletRequest request) {

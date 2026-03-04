@@ -19,9 +19,7 @@ public class GearReviewEntity {
     private BigDecimal rating;
     private String gearName;
     private String category;
-    private Integer views;
-    private Integer likes;
-    private Integer comments;
+    private String images;
     private String aiAnalysis;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;

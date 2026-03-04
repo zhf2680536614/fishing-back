@@ -51,3 +51,4 @@ minio:
 file:
   base-url: ${file.base-url}
   post-image-dir: ${file.post-image-dir}
+  user-avatar-dir: ${file.user-avatar-dir}

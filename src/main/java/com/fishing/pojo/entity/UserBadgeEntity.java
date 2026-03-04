@@ -1,21 +1,19 @@
 package com.fishing.pojo.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
-
 import java.time.LocalDateTime;
 
 @Data
-@TableName("biz_review_comment")
-public class ReviewCommentEntity {
+@TableName("sys_user_badge")
+public class UserBadgeEntity {
     @TableId(type = IdType.ASSIGN_ID)
     private Long id;
-    private Long reviewId;
     private Long userId;
-    private String content;
+    private Long badgeId;
+    private LocalDateTime obtainDate;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
+    @TableLogic
     private Integer isDeleted;
 }

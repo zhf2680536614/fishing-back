@@ -2,7 +2,9 @@ package com.fishing.controller;
 
 import com.fishing.pojo.dto.UserLoginDTO;
 import com.fishing.pojo.dto.UserRegisterDTO;
+import com.fishing.pojo.dto.UserUpdateDTO;
 import com.fishing.pojo.Result;
+import com.fishing.pojo.vo.UserProfileVO;
 import com.fishing.pojo.vo.UserVO;
 import com.fishing.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -39,5 +41,25 @@ public class UserController {
         log.info("获取用户信息：{}", id);
         UserVO userVO = userService.getUserInfo(id);
         return Result.success(userVO);
+    }
+
+    @GetMapping("/profile/{id}")
+    public Result<UserProfileVO> getProfile(@PathVariable Long id) {
+        log.info("获取用户个人中心数据：{}", id);
+        UserProfileVO profileVO = userService.getProfile(id);
+        return Result.success(profileVO);
+    }
+
+    @PutMapping("/profile/{id}")
+    public Result<UserVO> updateProfile(@PathVariable Long id, @RequestBody UserUpdateDTO updateDTO) {
+        log.info("更新用户资料：{}", id);
+        UserVO userVO = userService.updateProfile(id, updateDTO);
+        return Result.success(userVO);
+    }
+
+    @GetMapping("/badges/{id}")
+    public Result<?> getUserBadges(@PathVariable Long id) {
+        log.info("获取用户勋章：{}", id);
+        return Result.success(userService.getUserBadges(id));
     }
 }

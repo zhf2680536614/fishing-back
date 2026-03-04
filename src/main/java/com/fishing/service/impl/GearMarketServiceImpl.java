@@ -1,6 +1,7 @@
 package com.fishing.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fishing.exception.BusinessException;
 import com.fishing.mapper.GearMarketMapper;
@@ -108,8 +109,12 @@ public class GearMarketServiceImpl implements GearMarketService {
         if (!entity.getUserId().equals(userId)) {
             throw new BusinessException("无权删除");
         }
-        entity.setIsDeleted(1);
-        gearMarketMapper.updateById(entity);
+        
+        // 使用 LambdaUpdateWrapper 明确更新 is_deleted 字段
+        LambdaUpdateWrapper<GearMarketEntity> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(GearMarketEntity::getId, id);
+        updateWrapper.set(GearMarketEntity::getIsDeleted, 1);
+        gearMarketMapper.update(null, updateWrapper);
     }
 
     @Override
@@ -123,6 +128,17 @@ public class GearMarketServiceImpl implements GearMarketService {
         }
         entity.setStatus(status);
         gearMarketMapper.updateById(entity);
+    }
+
+    @Override
+    public List<GearMarketVO> getUserGearList(Long userId) {
+        LambdaQueryWrapper<GearMarketEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(GearMarketEntity::getUserId, userId);
+        queryWrapper.eq(GearMarketEntity::getIsDeleted, 0);
+        queryWrapper.orderByDesc(GearMarketEntity::getCreateTime);
+        
+        List<GearMarketEntity> entities = gearMarketMapper.selectList(queryWrapper);
+        return entities.stream().map(this::entityToVO).collect(Collectors.toList());
     }
 
     private GearMarketVO entityToVO(GearMarketEntity entity) {

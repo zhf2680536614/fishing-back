@@ -35,6 +35,22 @@ public class FileController {
     }
 
     /**
+     * 上传用户头像
+     */
+    @PostMapping("/upload/avatar")
+    public Result<String> uploadUserAvatar(@RequestParam("file") MultipartFile file) {
+        log.info("上传用户头像，文件名：{}，大小：{}", file.getOriginalFilename(), file.getSize());
+        try {
+            String url = minioUtils.uploadUserAvatar(file);
+            log.info("上传成功，URL：{}", url);
+            return Result.success(url);
+        } catch (Exception e) {
+            log.error("上传失败", e);
+            return Result.error("上传失败：" + e.getMessage());
+        }
+    }
+
+    /**
      * 批量上传帖子图片
      */
     @PostMapping("/upload/post/batch")

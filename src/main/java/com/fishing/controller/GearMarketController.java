@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -70,6 +71,13 @@ public class GearMarketController {
         Long gearId = Long.parseLong(id);
         GearMarketVO detail = gearMarketService.getById(gearId);
         return Result.success(detail);
+    }
+
+    @GetMapping("/user/list")
+    public Result<List<GearMarketVO>> getUserGearList(HttpServletRequest request) {
+        Long userId = getCurrentUserId(request);
+        List<GearMarketVO> list = gearMarketService.getUserGearList(userId);
+        return Result.success(list);
     }
 
     private Long getCurrentUserId(HttpServletRequest request) {

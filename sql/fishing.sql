@@ -1,289 +1,217 @@
-/*
- * 数据库名: fish_club_db
- * 字符集: utf8mb4
- * 排序规则: utf8mb4_general_ci
- * 描述: 钓鱼佬与空军俱乐部 - 核心数据库设计
- */
-SET
-    NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+SET NAMES utf8mb4;
+-- fish_club_db DDL
+CREATE DATABASE `fish_club_db`
+CHARACTER SET utf8mb4
+COLLATE utf8mb4_0900_ai_ci;;
+use `fish_club_db`;
+-- fish_club_db.base_fish_encyclopedia DDL
+CREATE TABLE `fish_club_db`.`base_fish_encyclopedia` (`id` BIGINT NOT NULL Comment "主键ID",
+`name` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL Comment "鱼类名称",
+`alias` VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL Comment "别名",
+`category` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL Comment "科属",
+`protection_level` TINYINT NULL DEFAULT 0 Comment "保护级别: 0-普通, 1-保护动物(需放流)",
+`habits` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL Comment "生活习性",
+`edible_value` VARCHAR(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL Comment "食用价值",
+`img_url` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL Comment "标准图鉴",
+`create_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+`update_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0),
+`is_deleted` TINYINT NULL DEFAULT 0,
+INDEX `idx_name`(`name` ASC) USING BTREE,
+PRIMARY KEY (`id`)) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic COMMENT = "鱼类百科表";
+-- fish_club_db.biz_comment DDL
+CREATE TABLE `fish_club_db`.`biz_comment` (`id` BIGINT NOT NULL Comment "主键ID",
+`post_id` BIGINT NOT NULL Comment "帖子ID",
+`user_id` BIGINT NOT NULL Comment "评论者ID (如果是AI, 则为系统ID)",
+`parent_id` BIGINT NULL DEFAULT 0 Comment "父评论ID",
+`content` VARCHAR(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL Comment "评论内容",
+`is_ai_generated` TINYINT NULL DEFAULT 0 Comment "是否AI生成的回复: 0-否, 1-是",
+`create_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+`update_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0),
+`is_deleted` TINYINT NULL DEFAULT 0,
+INDEX `idx_post_id`(`post_id` ASC) USING BTREE,
+PRIMARY KEY (`id`)) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic COMMENT = "帖子评论表";
+-- fish_club_db.biz_fishing_spot DDL
+CREATE TABLE `fish_club_db`.`biz_fishing_spot` (`id` BIGINT NOT NULL Comment "主键ID",
+`name` VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL Comment "钓点名称",
+`type` TINYINT NOT NULL Comment "类型: 0-野钓, 1-黑坑/收费, 2-路亚基地",
+`longitude` DECIMAL(10,6) NOT NULL Comment "经度 (高德/百度坐标)",
+`latitude` DECIMAL(10,6) NOT NULL Comment "纬度",
+`province` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL Comment "省",
+`city` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL Comment "市",
+`address` VARCHAR(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL Comment "详细地址",
+`price_desc` VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT '免费' Comment "收费描述",
+`fish_info` VARCHAR(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL Comment "常见鱼种",
+`images` JSON NULL Comment "钓点图片列表 (JSON数组存储MinIO地址)",
+`best_position_desc` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL Comment "AI推荐的最佳钓位描述",
+`creator_id` BIGINT NULL Comment "创建人ID",
+`status` TINYINT NULL DEFAULT 0 Comment "状态: 0-审核中, 1-已发布, 2-已下架",
+`create_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+`update_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0),
+`is_deleted` TINYINT NULL DEFAULT 0,
+INDEX `idx_city`(`city` ASC) USING BTREE,
+PRIMARY KEY (`id`)) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic COMMENT = "钓点地图表";
+-- fish_club_db.biz_gear_market DDL
+CREATE TABLE `fish_club_db`.`biz_gear_market` (`id` BIGINT NOT NULL Comment "主键ID",
+`user_id` BIGINT NOT NULL Comment "卖家ID",
+`title` VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL Comment "商品标题",
+`description` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL Comment "商品描述",
+`price` DECIMAL(10,2) NOT NULL Comment "价格",
+`original_price` DECIMAL(10,2) NULL Comment "原价",
+`images` JSON NULL Comment "商品图片",
+`status` TINYINT NULL DEFAULT 0 Comment "状态: 0-在售, 1-已售出, 2-下架",
+`create_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+`update_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0),
+`is_deleted` TINYINT NULL DEFAULT 0,
+`category` VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL Comment "装备分类: rod-鱼竿, box-钓箱, bait-饵料, other-其他",
+INDEX `idx_category`(`category` ASC) USING BTREE,
+INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
+PRIMARY KEY (`id`)) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic COMMENT = "二手装备交易表";
+-- fish_club_db.biz_gear_review DDL
+CREATE TABLE `fish_club_db`.`biz_gear_review` (`id` BIGINT NOT NULL Comment "主键ID",
+`user_id` BIGINT NOT NULL Comment "测评用户ID",
+`title` VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL Comment "测评标题",
+`content` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL Comment "测评内容",
+`rating` DECIMAL(2,1) NOT NULL Comment "评分 (1-5分)",
+`gear_name` VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL Comment "装备名称",
+`category` VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL Comment "装备分类: rod-鱼竿, box-钓箱, bait-饵料, other-其他",
+`ai_analysis` JSON NULL Comment "AI分析结果",
+`create_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+`update_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0),
+`is_deleted` TINYINT NULL DEFAULT 0,
+`images` JSON NULL Comment "测评图片 (JSON数组存储MinIO地址)",
+INDEX `idx_category`(`category` ASC) USING BTREE,
+INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
+PRIMARY KEY (`id`)) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic COMMENT = "装备测评表";
+-- fish_club_db.biz_order DDL
+CREATE TABLE `fish_club_db`.`biz_order` (`id` BIGINT NOT NULL AUTO_INCREMENT Comment "订单ID",
+`user_id` BIGINT NOT NULL Comment "用户ID",
+`gear_id` BIGINT NOT NULL Comment "装备ID",
+`gear_title` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL Comment "装备标题",
+`gear_price` DECIMAL(10,2) NOT NULL Comment "装备价格",
+`total_amount` DECIMAL(10,2) NOT NULL Comment "总金额",
+`status` INT NOT NULL DEFAULT 0 Comment "订单状态：0-待付款，1-已付款，2-已发货，3-已完成，4-已取消",
+`address` VARCHAR(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL Comment "收货地址",
+`contact_phone` VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL Comment "联系电话",
+`create_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP Comment "创建时间",
+`update_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0) Comment "更新时间",
+`is_deleted` INT NOT NULL DEFAULT 0 Comment "是否删除",
+INDEX `idx_gear_id`(`gear_id` ASC) USING BTREE,
+INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
+PRIMARY KEY (`id`)) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci AUTO_INCREMENT = 1 ROW_FORMAT = Dynamic COMMENT = "订单表";
+-- fish_club_db.biz_post DDL
+CREATE TABLE `fish_club_db`.`biz_post` (`id` BIGINT NOT NULL Comment "主键ID",
+`user_id` BIGINT NOT NULL Comment "发布者ID",
+`type` TINYINT NOT NULL Comment "帖子类型: 0-鱼获战报, 1-空军吐槽, 2-装备测评",
+`title` VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL Comment "标题",
+`content` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL Comment "内容",
+`images` JSON NULL Comment "图片列表 (JSON数组存储MinIO地址)",
+`fish_species` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL Comment "鱼种 (AI识别或手动填写)",
+`fish_weight` DECIMAL(10,2) NULL DEFAULT 0.00 Comment "鱼获重量 (斤)",
+`spot_id` BIGINT NULL Comment "关联钓点ID (可选)",
+`address_name` VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL Comment "地理位置名称",
+`view_count` INT NULL DEFAULT 0 Comment "浏览量",
+`like_count` INT NULL DEFAULT 0 Comment "点赞量",
+`comment_count` INT NULL DEFAULT 0 Comment "评论量",
+`ai_audit_status` TINYINT NULL DEFAULT 1 Comment "AI审核状态: 0-违规, 1-正常, 2-疑似",
+`ai_audit_reason` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL Comment "AI审核反馈原因",
+`create_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+`update_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0),
+`is_deleted` TINYINT NULL DEFAULT 0,
+`ai_comment` VARCHAR(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL Comment "AI安慰语（空军帖子专用）",
+INDEX `idx_type`(`type` ASC) USING BTREE,
+INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
+PRIMARY KEY (`id`)) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic COMMENT = "社区帖子表";
+-- fish_club_db.biz_post_like DDL
+CREATE TABLE `fish_club_db`.`biz_post_like` (`id` BIGINT NOT NULL Comment "主键ID",
+`post_id` BIGINT NOT NULL Comment "帖子ID",
+`user_id` BIGINT NOT NULL Comment "用户ID",
+`create_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+UNIQUE INDEX `uk_post_user`(`post_id` ASC,`user_id` ASC) USING BTREE,
+PRIMARY KEY (`id`)) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic COMMENT = "点赞记录表";
+-- fish_club_db.biz_user_address DDL
+CREATE TABLE `fish_club_db`.`biz_user_address` (`id` BIGINT NOT NULL AUTO_INCREMENT Comment "地址ID",
+`user_id` BIGINT NOT NULL Comment "用户ID",
+`name` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL Comment "收货人姓名",
+`phone` VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL Comment "联系电话",
+`province` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL Comment "省份",
+`city` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL Comment "城市",
+`district` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL Comment "区县",
+`detail_address` VARCHAR(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL Comment "详细地址",
+`is_default` TINYINT NOT NULL DEFAULT 0 Comment "是否默认地址：0-否，1-是",
+`create_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP Comment "创建时间",
+`update_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0) Comment "更新时间",
+`is_deleted` TINYINT NOT NULL DEFAULT 0 Comment "是否删除",
+INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
+PRIMARY KEY (`id`)) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci AUTO_INCREMENT = 2029137233849888771 ROW_FORMAT = Dynamic COMMENT = "用户收货地址表";
+-- fish_club_db.sys_ai_log DDL
+CREATE TABLE `fish_club_db`.`sys_ai_log` (`id` BIGINT NOT NULL Comment "主键ID",
+`user_id` BIGINT NOT NULL Comment "调用用户ID",
+`function_type` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL Comment "功能类型: FISH_ID(识鱼), CHAT(聊天), AUDIT(审核)",
+`input_content` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL Comment "用户输入内容(简略)",
+`output_content` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL Comment "AI返回内容(简略)",
+`status` TINYINT NULL DEFAULT 1 Comment "调用状态: 1-成功, 0-失败",
+`create_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+`is_deleted` TINYINT NULL DEFAULT 0,
+INDEX `idx_create_time`(`create_time` ASC) USING BTREE,
+PRIMARY KEY (`id`)) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic COMMENT = "AI调用日志表";
+-- fish_club_db.sys_user DDL
+CREATE TABLE `fish_club_db`.`sys_user` (`id` BIGINT NOT NULL Comment "主键ID (雪花算法)",
+`username` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL Comment "用户名/账号",
+`password` VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL Comment "密码 (加密存储)",
+`nickname` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL Comment "昵称",
+`avatar` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL Comment "头像URL (MinIO)",
+`phone` VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL Comment "手机号",
+`signature` VARCHAR(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL Comment "个性签名",
+`role` TINYINT NULL DEFAULT 0 Comment "角色: 0-普通用户, 1-管理员",
+`is_master` TINYINT NULL DEFAULT 0 Comment "是否认证大师: 0-否, 1-是",
+`exp_points` INT NULL DEFAULT 0 Comment "经验值 (用于等级)",
+`status` TINYINT NULL DEFAULT 1 Comment "状态: 1-正常, 0-封禁",
+`create_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP Comment "创建时间",
+`update_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0) Comment "更新时间",
+`is_deleted` TINYINT NULL DEFAULT 0 Comment "逻辑删除: 0-未删, 1-已删",
+UNIQUE INDEX `uk_username`(`username` ASC) USING BTREE,
+PRIMARY KEY (`id`)) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic COMMENT = "用户信息表";
+-- fish_club_db.sys_user_badge DDL
+CREATE TABLE `fish_club_db`.`sys_user_badge` (`id` BIGINT NOT NULL Comment "主键ID",
+`user_id` BIGINT NOT NULL Comment "用户ID",
+`badge_id` BIGINT NOT NULL Comment "勋章定义ID",
+`obtain_date` DATETIME NULL Comment "获得时间",
+`create_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+`update_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0),
+`is_deleted` TINYINT NULL DEFAULT 0,
+INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
+INDEX `idx_badge_id`(`badge_id` ASC) USING BTREE,
+PRIMARY KEY (`id`),
+CONSTRAINT `fk_user_badge_badge` FOREIGN KEY (`badge_id`) REFERENCES `sys_badge_definition` (`id`) ON DELETE CASCADE ON UPDATE CASCADE) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic COMMENT = "用户勋章表";
 
-SET
-    FOREIGN_KEY_CHECKS = 0;
+-- fish_club_db.sys_badge_definition DDL
+CREATE TABLE `fish_club_db`.`sys_badge_definition` (`id` BIGINT NOT NULL Comment "主键ID",
+`badge_name` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL Comment "勋章名称",
+`badge_icon` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL Comment "勋章图标URL",
+`description` VARCHAR(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL Comment "勋章描述",
+`requirement_type` VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL Comment "需求类型: fishing_days, fish_days, air_force_days, total_weight",
+`requirement_value` DECIMAL(10,2) NOT NULL Comment "需求值",
+`sort_order` INT NULL DEFAULT 0 Comment "排序顺序",
+`create_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+`update_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0),
+`is_deleted` TINYINT NULL DEFAULT 0,
+UNIQUE INDEX `uk_badge_name`(`badge_name` ASC) USING BTREE,
+PRIMARY KEY (`id`)) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic COMMENT = "勋章定义表";
 
--- =================================================================
--- 1. 系统基础模块 (用户、权限)
--- =================================================================
--- 表：用户信息表
-DROP TABLE IF EXISTS `sys_user`;
+-- 插入12个勋章定义
+INSERT INTO `fish_club_db`.`sys_badge_definition` (`id`, `badge_name`, `badge_icon`, `description`, `requirement_type`, `requirement_value`, `sort_order`) VALUES
+(1, '初出茅庐', 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=simple%20fishing%20badge%20for%20beginner%2C%20bronze%20color%2C%20simple%20icon&image_size=square', '完成第一次出钓', 'fishing_days', 1, 1),
+(2, '坚持不懈', 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=simple%20fishing%20badge%20for%20persistence%2C%20silver%20color%2C%20simple%20icon&image_size=square', '累计出钓10天', 'fishing_days', 10, 2),
+(3, '钓鱼达人', 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=simple%20fishing%20badge%20for%20master%2C%20gold%20color%2C%20simple%20icon&image_size=square', '累计出钓30天', 'fishing_days', 30, 3),
+(4, '钓鱼大师', 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=simple%20fishing%20badge%20for%20grandmaster%2C%20platinum%20color%2C%20simple%20icon&image_size=square', '累计出钓100天', 'fishing_days', 100, 4),
+(5, '收获颇丰', 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=simple%20fishing%20badge%20for%20good%20catch%2C%20green%20color%2C%20simple%20icon&image_size=square', '累计有鱼获5天', 'fish_days', 5, 5),
+(6, '渔获高手', 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=simple%20fishing%20badge%20for%20expert%20catch%2C%20blue%20color%2C%20simple%20icon&image_size=square', '累计有鱼获20天', 'fish_days', 20, 6),
+(7, '空军少尉', 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=simple%20fishing%20badge%20for%20air%20force%20lieutenant%2C%20gray%20color%2C%20simple%20icon&image_size=square', '累计空军5天', 'air_force_days', 5, 7),
+(8, '空军上校', 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=simple%20fishing%20badge%20for%20air%20force%20colonel%2C%20dark%20gray%20color%2C%20simple%20icon&image_size=square', '累计空军15天', 'air_force_days', 15, 8),
+(9, '空军司令', 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=simple%20fishing%20badge%20for%20air%20force%20commander%2C%20black%20color%2C%20simple%20icon&image_size=square', '累计空军30天', 'air_force_days', 30, 9),
+(10, '小鱼猎手', 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=simple%20fishing%20badge%20for%20small%20fish%20hunter%2C%20yellow%20color%2C%20simple%20icon&image_size=square', '累计鱼获重量达到10斤', 'total_weight', 10, 10),
+(11, '大鱼克星', 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=simple%20fishing%20badge%20for%20big%20fish%20hunter%2C%20orange%20color%2C%20simple%20icon&image_size=square', '累计鱼获重量达到50斤', 'total_weight', 50, 11),
+(12, '巨物终结者', 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=simple%20fishing%20badge%20for%20giant%20fish%20hunter%2C%20red%20color%2C%20simple%20icon&image_size=square', '累计鱼获重量达到100斤', 'total_weight', 100, 12);
 
-CREATE TABLE `sys_user` (
-    `id` bigint NOT NULL COMMENT '主键ID (雪花算法)',
-    `username` varchar(50) NOT NULL COMMENT '用户名/账号',
-    `password` varchar(100) NOT NULL COMMENT '密码 (加密存储)',
-    `nickname` varchar(50) DEFAULT NULL COMMENT '昵称',
-    `avatar` varchar(255) DEFAULT NULL COMMENT '头像URL (MinIO)',
-    `phone` varchar(20) DEFAULT NULL COMMENT '手机号',
-    `signature` varchar(200) DEFAULT NULL COMMENT '个性签名',
-    `role` tinyint DEFAULT 0 COMMENT '角色: 0-普通用户, 1-管理员',
-    `is_master` tinyint DEFAULT 0 COMMENT '是否认证大师: 0-否, 1-是',
-    `exp_points` int DEFAULT 0 COMMENT '经验值 (用于等级)',
-    `status` tinyint DEFAULT 1 COMMENT '状态: 1-正常, 0-封禁',
-    `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    `is_deleted` tinyint DEFAULT 0 COMMENT '逻辑删除: 0-未删, 1-已删',
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_username` (`username`)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '用户信息表';
-
--- 表：用户勋章表 (游戏化功能)
-DROP TABLE IF EXISTS `sys_user_badge`;
-
-CREATE TABLE `sys_user_badge` (
-    `id` bigint NOT NULL COMMENT '主键ID',
-    `user_id` bigint NOT NULL COMMENT '用户ID',
-    `badge_name` varchar(50) NOT NULL COMMENT '勋章名称 (如: 空军司令)',
-    `badge_icon` varchar(255) DEFAULT NULL COMMENT '勋章图标URL',
-    `obtain_date` datetime DEFAULT NULL COMMENT '获得时间',
-    `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-    `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    `is_deleted` tinyint DEFAULT 0,
-    PRIMARY KEY (`id`),
-    KEY `idx_user_id` (`user_id`)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '用户勋章表';
-
--- =================================================================
--- 2. 核心业务模块 (社区、战报、空军)
--- =================================================================
--- 表：社区帖子表 (核心表)
-DROP TABLE IF EXISTS `biz_post`;
-
-CREATE TABLE `biz_post` (
-    `id` bigint NOT NULL COMMENT '主键ID',
-    `user_id` bigint NOT NULL COMMENT '发布者ID',
-    `type` tinyint NOT NULL COMMENT '帖子类型: 0-鱼获战报, 1-空军吐槽, 2-装备测评',
-    `title` varchar(100) DEFAULT NULL COMMENT '标题',
-    `content` text COMMENT '内容',
-    `images` json DEFAULT NULL COMMENT '图片列表 (JSON数组存储MinIO地址)',
-    `fish_species` varchar(50) DEFAULT NULL COMMENT '鱼种 (AI识别或手动填写)',
-    `fish_weight` decimal(10, 2) DEFAULT 0.00 COMMENT '鱼获重量 (斤)',
-    `spot_id` bigint DEFAULT NULL COMMENT '关联钓点ID (可选)',
-    `address_name` varchar(100) DEFAULT NULL COMMENT '地理位置名称',
-    `view_count` int DEFAULT 0 COMMENT '浏览量',
-    `like_count` int DEFAULT 0 COMMENT '点赞量',
-    `comment_count` int DEFAULT 0 COMMENT '评论量',
-    `ai_audit_status` tinyint DEFAULT 1 COMMENT 'AI审核状态: 0-违规, 1-正常, 2-疑似',
-    `ai_audit_reason` varchar(255) DEFAULT NULL COMMENT 'AI审核反馈原因',
-    `ai_comment` varchar(500) DEFAULT NULL COMMENT 'AI安慰语（空军帖子专用）',
-    `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-    `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    `is_deleted` tinyint DEFAULT 0,
-    PRIMARY KEY (`id`),
-    KEY `idx_user_id` (`user_id`),
-    KEY `idx_type` (`type`)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '社区帖子表';
-
--- 表：帖子评论表
-DROP TABLE IF EXISTS `biz_comment`;
-
-CREATE TABLE `biz_comment` (
-    `id` bigint NOT NULL COMMENT '主键ID',
-    `post_id` bigint NOT NULL COMMENT '帖子ID',
-    `user_id` bigint NOT NULL COMMENT '评论者ID (如果是AI, 则为系统ID)',
-    `parent_id` bigint DEFAULT 0 COMMENT '父评论ID',
-    `content` varchar(500) NOT NULL COMMENT '评论内容',
-    `is_ai_generated` tinyint DEFAULT 0 COMMENT '是否AI生成的回复: 0-否, 1-是',
-    `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-    `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    `is_deleted` tinyint DEFAULT 0,
-    PRIMARY KEY (`id`),
-    KEY `idx_post_id` (`post_id`)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '帖子评论表';
-
--- 表：点赞记录表 (防止重复点赞)
-DROP TABLE IF EXISTS `biz_post_like`;
-
-CREATE TABLE `biz_post_like` (
-    `id` bigint NOT NULL COMMENT '主键ID',
-    `post_id` bigint NOT NULL COMMENT '帖子ID',
-    `user_id` bigint NOT NULL COMMENT '用户ID',
-    `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_post_user` (`post_id`, `user_id`)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '点赞记录表';
-
--- =================================================================
--- 3. 地图与钓点模块
--- =================================================================
--- 表：钓点信息表
-DROP TABLE IF EXISTS `biz_fishing_spot`;
-
-CREATE TABLE `biz_fishing_spot` (
-    `id` bigint NOT NULL COMMENT '主键ID',
-    `name` varchar(100) NOT NULL COMMENT '钓点名称',
-    `type` tinyint NOT NULL COMMENT '类型: 0-野钓, 1-黑坑/收费, 2-路亚基地',
-    `longitude` decimal(10, 6) NOT NULL COMMENT '经度 (高德/百度坐标)',
-    `latitude` decimal(10, 6) NOT NULL COMMENT '纬度',
-    `province` varchar(50) DEFAULT NULL COMMENT '省',
-    `city` varchar(50) DEFAULT NULL COMMENT '市',
-    `address` varchar(200) DEFAULT NULL COMMENT '详细地址',
-    `price_desc` varchar(100) DEFAULT '免费' COMMENT '收费描述',
-    `fish_info` varchar(200) DEFAULT NULL COMMENT '常见鱼种',
-    `best_position_desc` text COMMENT 'AI推荐的最佳钓位描述',
-    `creator_id` bigint DEFAULT NULL COMMENT '创建人ID',
-    `status` tinyint DEFAULT 0 COMMENT '状态: 0-审核中, 1-已发布, 2-已下架',
-    `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-    `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    `is_deleted` tinyint DEFAULT 0,
-    PRIMARY KEY (`id`),
-    KEY `idx_city` (`city`)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '钓点地图表';
-
--- =================================================================
--- 4. 辅助数据与AI模块
--- =================================================================
--- 表：鱼类百科 (用于AI识鱼后的关联展示)
-DROP TABLE IF EXISTS `base_fish_encyclopedia`;
-
-CREATE TABLE `base_fish_encyclopedia` (
-    `id` bigint NOT NULL COMMENT '主键ID',
-    `name` varchar(50) NOT NULL COMMENT '鱼类名称',
-    `alias` varchar(100) DEFAULT NULL COMMENT '别名',
-    `category` varchar(50) DEFAULT NULL COMMENT '科属',
-    `protection_level` tinyint DEFAULT 0 COMMENT '保护级别: 0-普通, 1-保护动物(需放流)',
-    `habits` text COMMENT '生活习性',
-    `edible_value` varchar(200) DEFAULT NULL COMMENT '食用价值',
-    `img_url` varchar(255) DEFAULT NULL COMMENT '标准图鉴',
-    `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-    `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    `is_deleted` tinyint DEFAULT 0,
-    PRIMARY KEY (`id`),
-    KEY `idx_name` (`name`)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '鱼类百科表';
-
--- 表：AI 使用日志 (用于管理端统计 Token 消耗)
-DROP TABLE IF EXISTS `sys_ai_log`;
-
-CREATE TABLE `sys_ai_log` (
-    `id` bigint NOT NULL COMMENT '主键ID',
-    `user_id` bigint NOT NULL COMMENT '调用用户ID',
-    `function_type` varchar(50) NOT NULL COMMENT '功能类型: FISH_ID(识鱼), CHAT(聊天), AUDIT(审核)',
-    `input_content` text COMMENT '用户输入内容(简略)',
-    `output_content` text COMMENT 'AI返回内容(简略)',
-    `status` tinyint DEFAULT 1 COMMENT '调用状态: 1-成功, 0-失败',
-    `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-    `is_deleted` tinyint DEFAULT 0,
-    PRIMARY KEY (`id`),
-    KEY `idx_create_time` (`create_time`)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = 'AI调用日志表';
-
--- 表：二手装备/闲置表
-DROP TABLE IF EXISTS `biz_gear_market`;
-
-CREATE TABLE `biz_gear_market` (
-    `id` bigint NOT NULL COMMENT '主键ID',
-    `user_id` bigint NOT NULL COMMENT '卖家ID',
-    `title` varchar(100) NOT NULL COMMENT '商品标题',
-    `description` text COMMENT '商品描述',
-    `price` decimal(10, 2) NOT NULL COMMENT '价格',
-    `original_price` decimal(10, 2) DEFAULT NULL COMMENT '原价',
-    `images` json DEFAULT NULL COMMENT '商品图片',
-    `category` varchar(20) DEFAULT NULL COMMENT '装备分类: rod-鱼竿, box-钓箱, bait-饵料, other-其他',
-    `status` tinyint DEFAULT 0 COMMENT '状态: 0-在售, 1-已售出, 2-下架',
-    `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-    `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    `is_deleted` tinyint DEFAULT 0,
-    PRIMARY KEY (`id`),
-    KEY `idx_user_id` (`user_id`),
-    KEY `idx_category` (`category`)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '二手装备交易表';
-
--- 表：装备测评表
-DROP TABLE IF EXISTS `biz_gear_review`;
-
-CREATE TABLE `biz_gear_review` (
-    `id` bigint NOT NULL COMMENT '主键ID',
-    `user_id` bigint NOT NULL COMMENT '测评用户ID',
-    `title` varchar(100) NOT NULL COMMENT '测评标题',
-    `content` text NOT NULL COMMENT '测评内容',
-    `rating` decimal(2, 1) NOT NULL COMMENT '评分 (1-5分)',
-    `gear_name` varchar(100) NOT NULL COMMENT '装备名称',
-    `category` varchar(20) DEFAULT NULL COMMENT '装备分类: rod-鱼竿, box-钓箱, bait-饵料, other-其他',
-    `views` int DEFAULT 0 COMMENT '浏览量',
-    `likes` int DEFAULT 0 COMMENT '点赞量',
-    `comments` int DEFAULT 0 COMMENT '评论量',
-    `ai_analysis` json DEFAULT NULL COMMENT 'AI分析结果',
-    `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-    `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    `is_deleted` tinyint DEFAULT 0,
-    PRIMARY KEY (`id`),
-    KEY `idx_user_id` (`user_id`),
-    KEY `idx_category` (`category`)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '装备测评表';
-
--- 表：测评点赞记录表
-DROP TABLE IF EXISTS `biz_review_like`;
-
-CREATE TABLE `biz_review_like` (
-    `id` bigint NOT NULL COMMENT '主键ID',
-    `review_id` bigint NOT NULL COMMENT '测评ID',
-    `user_id` bigint NOT NULL COMMENT '用户ID',
-    `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_review_user` (`review_id`, `user_id`)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '测评点赞记录表';
-
--- 表：测评评论表
-DROP TABLE IF EXISTS `biz_review_comment`;
-
-CREATE TABLE `biz_review_comment` (
-    `id` bigint NOT NULL COMMENT '主键ID',
-    `review_id` bigint NOT NULL COMMENT '测评ID',
-    `user_id` bigint NOT NULL COMMENT '评论者ID',
-    `content` varchar(500) NOT NULL COMMENT '评论内容',
-    `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-    `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    `is_deleted` tinyint DEFAULT 0,
-    PRIMARY KEY (`id`),
-    KEY `idx_review_id` (`review_id`)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '测评评论表';
-
--- 表：订单表
-DROP TABLE IF EXISTS `biz_order`;
-
-CREATE TABLE `biz_order` (
-    `id` bigint NOT NULL AUTO_INCREMENT COMMENT '订单ID',
-    `user_id` bigint NOT NULL COMMENT '用户ID',
-    `gear_id` bigint NOT NULL COMMENT '装备ID',
-    `gear_title` varchar(255) NOT NULL COMMENT '装备标题',
-    `gear_price` decimal(10, 2) NOT NULL COMMENT '装备价格',
-    `total_amount` decimal(10, 2) NOT NULL COMMENT '总金额',
-    `status` int NOT NULL DEFAULT '0' COMMENT '订单状态：0-待付款，1-已付款，2-已发货，3-已完成，4-已取消',
-    `address` varchar(500) NOT NULL COMMENT '收货地址',
-    `contact_phone` varchar(20) NOT NULL COMMENT '联系电话',
-    `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    `is_deleted` int NOT NULL DEFAULT '0' COMMENT '是否删除',
-    PRIMARY KEY (`id`),
-    KEY `idx_user_id` (`user_id`),
-    KEY `idx_gear_id` (`gear_id`)
-) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COMMENT = '订单表';
-
--- 表：用户收货地址表
-DROP TABLE IF EXISTS `biz_user_address`;
-
-CREATE TABLE `biz_user_address` (
-    `id` bigint NOT NULL AUTO_INCREMENT COMMENT '地址ID',
-    `user_id` bigint NOT NULL COMMENT '用户ID',
-    `name` varchar(50) NOT NULL COMMENT '收货人姓名',
-    `phone` varchar(20) NOT NULL COMMENT '联系电话',
-    `province` varchar(50) NOT NULL COMMENT '省份',
-    `city` varchar(50) NOT NULL COMMENT '城市',
-    `district` varchar(50) NOT NULL COMMENT '区县',
-    `detail_address` varchar(200) NOT NULL COMMENT '详细地址',
-    `is_default` tinyint NOT NULL DEFAULT '0' COMMENT '是否默认地址：0-否，1-是',
-    `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    `is_deleted` tinyint NOT NULL DEFAULT '0' COMMENT '是否删除',
-    PRIMARY KEY (`id`),
-    KEY `idx_user_id` (`user_id`)
-) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8mb4 COMMENT = '用户收货地址表';
+SET FOREIGN_KEY_CHECKS = 1;

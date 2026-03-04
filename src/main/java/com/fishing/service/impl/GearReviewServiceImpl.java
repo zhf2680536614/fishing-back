@@ -4,11 +4,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fishing.exception.BusinessException;
 import com.fishing.mapper.GearReviewMapper;
-import com.fishing.mapper.ReviewLikeMapper;
 import com.fishing.mapper.UserMapper;
 import com.fishing.pojo.dto.GearReviewDTO;
 import com.fishing.pojo.entity.GearReviewEntity;
-import com.fishing.pojo.entity.ReviewLikeEntity;
 import com.fishing.pojo.entity.UserEntity;
 import com.fishing.pojo.vo.GearReviewVO;
 import com.fishing.service.GearReviewService;
@@ -17,7 +15,6 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,7 +26,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class GearReviewServiceImpl implements GearReviewService {
     private final GearReviewMapper gearReviewMapper;
-    private final ReviewLikeMapper reviewLikeMapper;
     private final UserMapper userMapper;
     private final MinioUtils minioUtils;
     private final Gson gson = new Gson();
@@ -50,7 +46,9 @@ public class GearReviewServiceImpl implements GearReviewService {
         Page<GearReviewEntity> page = gearReviewMapper.selectPage(new Page<>(pageNum, pageSize), queryWrapper);
         Page<GearReviewVO> voPage = new Page<>(page.getCurrent(), page.getSize(), page.getTotal());
 
-        List<GearReviewVO> records = page.getRecords().stream().map(this::entityToVO).collect(Collectors.toList());
+        List<GearReviewVO> records = page.getRecords().stream()
+                .map(this::entityToVO)
+                .collect(Collectors.toList());
         voPage.setRecords(records);
         return voPage;
     }
@@ -61,9 +59,6 @@ public class GearReviewServiceImpl implements GearReviewService {
         if (entity == null || entity.getIsDeleted() == 1) {
             throw new BusinessException("测评不存在");
         }
-        // 增加浏览量
-        entity.setViews(entity.getViews() + 1);
-        gearReviewMapper.updateById(entity);
         return entityToVO(entity);
     }
 
@@ -76,9 +71,7 @@ public class GearReviewServiceImpl implements GearReviewService {
         entity.setRating(dto.getRating());
         entity.setGearName(dto.getGearName());
         entity.setCategory(dto.getCategory());
-        entity.setViews(0);
-        entity.setLikes(0);
-        entity.setComments(0);
+        entity.setImages(gson.toJson(dto.getImages()));
         entity.setAiAnalysis(generateAiAnalysis(dto.getContent()));
         entity.setIsDeleted(0);
         gearReviewMapper.insert(entity);
@@ -98,6 +91,7 @@ public class GearReviewServiceImpl implements GearReviewService {
         entity.setRating(dto.getRating());
         entity.setGearName(dto.getGearName());
         entity.setCategory(dto.getCategory());
+        entity.setImages(gson.toJson(dto.getImages()));
         entity.setAiAnalysis(generateAiAnalysis(dto.getContent()));
         gearReviewMapper.updateById(entity);
     }
@@ -113,59 +107,6 @@ public class GearReviewServiceImpl implements GearReviewService {
         }
         entity.setIsDeleted(1);
         gearReviewMapper.updateById(entity);
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void like(Long reviewId, Long userId) {
-        // 检查是否已点赞
-        LambdaQueryWrapper<ReviewLikeEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ReviewLikeEntity::getReviewId, reviewId);
-        queryWrapper.eq(ReviewLikeEntity::getUserId, userId);
-        if (reviewLikeMapper.selectOne(queryWrapper) != null) {
-            throw new BusinessException("已经点赞过");
-        }
-
-        // 增加点赞记录
-        ReviewLikeEntity likeEntity = new ReviewLikeEntity();
-        likeEntity.setReviewId(reviewId);
-        likeEntity.setUserId(userId);
-        reviewLikeMapper.insert(likeEntity);
-
-        // 更新点赞数
-        GearReviewEntity reviewEntity = gearReviewMapper.selectById(reviewId);
-        if (reviewEntity != null) {
-            reviewEntity.setLikes(reviewEntity.getLikes() + 1);
-            gearReviewMapper.updateById(reviewEntity);
-        }
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void unlike(Long reviewId, Long userId) {
-        // 删除点赞记录
-        LambdaQueryWrapper<ReviewLikeEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ReviewLikeEntity::getReviewId, reviewId);
-        queryWrapper.eq(ReviewLikeEntity::getUserId, userId);
-        int result = reviewLikeMapper.delete(queryWrapper);
-        if (result == 0) {
-            throw new BusinessException("未点赞");
-        }
-
-        // 更新点赞数
-        GearReviewEntity reviewEntity = gearReviewMapper.selectById(reviewId);
-        if (reviewEntity != null && reviewEntity.getLikes() > 0) {
-            reviewEntity.setLikes(reviewEntity.getLikes() - 1);
-            gearReviewMapper.updateById(reviewEntity);
-        }
-    }
-
-    @Override
-    public boolean isLiked(Long reviewId, Long userId) {
-        LambdaQueryWrapper<ReviewLikeEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ReviewLikeEntity::getReviewId, reviewId);
-        queryWrapper.eq(ReviewLikeEntity::getUserId, userId);
-        return reviewLikeMapper.selectOne(queryWrapper) != null;
     }
 
     private GearReviewVO entityToVO(GearReviewEntity entity) {
@@ -185,9 +126,9 @@ public class GearReviewServiceImpl implements GearReviewService {
         vo.setRating(entity.getRating());
         vo.setGearName(entity.getGearName());
         vo.setCategory(entity.getCategory());
-        vo.setViews(entity.getViews());
-        vo.setLikes(entity.getLikes());
-        vo.setComments(entity.getComments());
+        if (entity.getImages() != null) {
+            vo.setImages(gson.fromJson(entity.getImages(), new TypeToken<List<String>>(){}.getType()));
+        }
         if (entity.getAiAnalysis() != null) {
             vo.setAiAnalysis(gson.fromJson(entity.getAiAnalysis(), new TypeToken<Map<String, Object>>(){}.getType()));
         }
@@ -196,7 +137,6 @@ public class GearReviewServiceImpl implements GearReviewService {
     }
 
     private String generateAiAnalysis(String content) {
-        // 简单的AI分析模拟
         Map<String, Object> analysis = new HashMap<>();
         int goodCount = 0;
         int badCount = 0;
@@ -215,7 +155,6 @@ public class GearReviewServiceImpl implements GearReviewService {
         int goodRate = total > 0 ? (goodCount * 100) / total : 50;
         analysis.put("goodRate", goodRate);
         
-        // 提取关键词
         List<String> keywords = new ArrayList<>();
         if (content.contains("鱼竿")) keywords.add("鱼竿");
         if (content.contains("钓箱")) keywords.add("钓箱");

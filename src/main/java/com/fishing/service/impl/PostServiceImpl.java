@@ -40,6 +40,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, PostEntity> impleme
     }
 
     @Override
+    @Transactional
     public PostVO createPost(PostCreateDTO dto, Long userId) {
         log.info("创建帖子，用户ID：{}，标题：{}", userId, dto.getTitle());
 
@@ -70,6 +71,19 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, PostEntity> impleme
         }
 
         postMapper.insert(entity);
+
+        // 如果是鱼获战报且有鱼货重量，增加经验值（1kg = 1经验值，向上取整）
+        if (dto.getFishWeight() != null && dto.getFishWeight().compareTo(BigDecimal.ZERO) > 0) {
+            int expToAdd = (int) Math.ceil(dto.getFishWeight().doubleValue());
+            UserEntity user = userMapper.selectById(userId);
+            if (user != null) {
+                int currentExp = user.getExpPoints() != null ? user.getExpPoints() : 0;
+                user.setExpPoints(currentExp + expToAdd);
+                userMapper.updateById(user);
+                log.info("用户{}发布鱼获战报，鱼货重量{}kg，增加经验值{}，当前经验值{}", 
+                    userId, dto.getFishWeight(), expToAdd, user.getExpPoints());
+            }
+        }
 
         return getPostDetail(entity.getId());
     }

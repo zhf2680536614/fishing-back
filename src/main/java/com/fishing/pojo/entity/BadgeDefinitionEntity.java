@@ -8,11 +8,17 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-@TableName("biz_review_like")
-public class ReviewLikeEntity {
+@TableName("sys_badge_definition")
+public class BadgeDefinitionEntity {
     @TableId(type = IdType.ASSIGN_ID)
     private Long id;
-    private Long reviewId;
-    private Long userId;
+    private String badgeName;
+    private String badgeIcon;
+    private String description;
+    private String requirementType;
+    private Double requirementValue;
+    private Integer sortOrder;
     private LocalDateTime createTime;
+    private LocalDateTime updateTime;
+    private Integer isDeleted;
 }

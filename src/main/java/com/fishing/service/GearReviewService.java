@@ -10,7 +10,4 @@ public interface GearReviewService {
     void save(GearReviewDTO dto, Long userId);
     void update(Long id, GearReviewDTO dto, Long userId);
     void delete(Long id, Long userId);
-    void like(Long reviewId, Long userId);
-    void unlike(Long reviewId, Long userId);
-    boolean isLiked(Long reviewId, Long userId);
 }

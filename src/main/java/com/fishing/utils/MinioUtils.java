@@ -29,6 +29,9 @@ public class MinioUtils {
     @Value("${file.post-image-dir}")
     private String postImageDir;
 
+    @Value("${file.user-avatar-dir}")
+    private String userAvatarDir;
+
     public MinioUtils(MinioClient minioClient) {
         this.minioClient = minioClient;
     }
@@ -74,6 +77,13 @@ public class MinioUtils {
      */
     public String uploadPostImage(MultipartFile file) {
         return uploadFile(file, postImageDir);
+    }
+
+    /**
+     * 上传用户头像
+     */
+    public String uploadUserAvatar(MultipartFile file) {
+        return uploadFile(file, userAvatarDir);
     }
 
     /**
