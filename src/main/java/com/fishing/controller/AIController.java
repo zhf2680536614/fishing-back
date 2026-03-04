@@ -33,4 +33,22 @@ public class AIController {
         log.info("收到 AI 对话请求: {}", message);
         return aiService.chat(message);
     }
+
+    /**
+     * AI 分析钓点 - 流式输出
+     * @param spotName 钓点名称
+     * @param spotType 钓点类型
+     * @param address 地址
+     * @param fishInfo 鱼种信息
+     * @return SseEmitter 流式响应
+     */
+    @GetMapping(value = "/analyze-spot", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter analyzeSpot(
+            @RequestParam(required = false) String spotName,
+            @RequestParam(required = false) Integer spotType,
+            @RequestParam(required = false) String address,
+            @RequestParam(required = false) String fishInfo) {
+        log.info("收到 AI 分析钓点请求: {} - {}", spotName, spotType);
+        return aiService.analyzeSpot(spotName, spotType, address, fishInfo);
+    }
 }

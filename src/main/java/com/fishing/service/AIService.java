@@ -55,6 +55,22 @@ public class AIService {
         3. 建议环保钓鱼，保护水域环境
         """;
 
+    // 钓点分析系统提示词
+    private static final String SPOT_ANALYSIS_PROMPT = """
+        你是一位专业的钓鱼分析师，擅长分析钓点信息并给出专业建议。
+
+        你需要根据钓点的名称、类型、地址、鱼种信息等，分析该钓点的特点并给出建议。
+
+        回答要求：
+        1. 简洁明了，控制在50-80个字之间
+        2. 包含：钓点适合什么钓法（如台钓、路亚、筏钓等）
+        3. 包含：推荐使用的饵料类型（如商品饵、活饵、路亚饵等）
+        4. 语言精炼，直接给出结论，不要废话
+
+        回答格式示例：
+        该钓点适合台钓和手竿垂钓，以鲫鱼、鲤鱼为主。推荐使用蓝鲫+九一八商品饵，可搭配蚯蚓红虫，早晚口最佳。
+        """;
+
     public AIService(DoubaoConfig doubaoConfig) {
         this.doubaoConfig = doubaoConfig;
         this.objectMapper = new ObjectMapper();
@@ -260,5 +276,140 @@ public class AIService {
         requestBody.put("max_tokens", 2048);
 
         return requestBody;
+    }
+
+    /**
+     * AI 分析钓点 - 流式输出
+     * @param spotName 钓点名称
+     * @param spotType 钓点类型（0-野钓，1-黑坑，2-路亚）
+     * @param address 地址
+     * @param fishInfo 鱼种信息
+     * @return SseEmitter
+     */
+    public SseEmitter analyzeSpot(String spotName, Integer spotType, String address, String fishInfo) {
+        SseEmitter emitter = new SseEmitter(60000L); // 1分钟超时
+
+        executorService.execute(() -> {
+            HttpURLConnection connection = null;
+            try {
+                String apiUrl = doubaoConfig.getStreamApiUrl();
+
+                // 构建分析请求
+                String typeText = getSpotTypeText(spotType);
+                String userMessage = String.format(
+                    "请分析以下钓点：\n名称：%s\n类型：%s\n地址：%s\n鱼种：%s\n\n请给出简短的分析建议。",
+                    spotName != null ? spotName : "未知钓点",
+                    typeText,
+                    address != null ? address : "未知地址",
+                    fishInfo != null ? fishInfo : "未知鱼种"
+                );
+
+                Map<String, Object> requestBody = buildSpotAnalysisRequest(userMessage);
+                String jsonBody = objectMapper.writeValueAsString(requestBody);
+
+                URL url = new URL(apiUrl);
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("POST");
+                connection.setRequestProperty("Content-Type", "application/json");
+                connection.setRequestProperty("Authorization", "Bearer " + doubaoConfig.getApiKey());
+                connection.setRequestProperty("Accept", "text/event-stream");
+                connection.setDoOutput(true);
+                connection.setDoInput(true);
+                connection.setConnectTimeout(30000);
+                connection.setReadTimeout(60000);
+
+                try (OutputStream os = connection.getOutputStream()) {
+                    os.write(jsonBody.getBytes(StandardCharsets.UTF_8));
+                }
+
+                int responseCode = connection.getResponseCode();
+                if (responseCode != HttpURLConnection.HTTP_OK) {
+                    log.error("API 调用失败，状态码: {}", responseCode);
+                    Map<String, String> errorData = new HashMap<>();
+                    errorData.put("error", "AI 分析失败");
+                    emitter.send(SseEmitter.event().data(objectMapper.writeValueAsString(errorData)));
+                    emitter.complete();
+                    return;
+                }
+
+                InputStream inputStream = connection.getInputStream();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    line = line.trim();
+                    if (line.isEmpty()) continue;
+
+                    if (line.startsWith("data:")) {
+                        String data = line.substring(5).trim();
+                        if ("[DONE]".equals(data)) {
+                            emitter.send(SseEmitter.event().data("[DONE]"));
+                            break;
+                        }
+                        processChatCompletionsData(data, emitter);
+                    }
+                }
+
+                reader.close();
+                emitter.complete();
+
+            } catch (Exception e) {
+                log.error("AI 分析钓点异常", e);
+                try {
+                    Map<String, String> errorData = new HashMap<>();
+                    errorData.put("error", "AI 分析失败: " + e.getMessage());
+                    emitter.send(SseEmitter.event().data(objectMapper.writeValueAsString(errorData)));
+                    emitter.completeWithError(e);
+                } catch (Exception ex) {
+                    log.error("发送错误信息失败", ex);
+                }
+            } finally {
+                if (connection != null) {
+                    connection.disconnect();
+                }
+            }
+        });
+
+        return emitter;
+    }
+
+    /**
+     * 构建钓点分析请求体
+     */
+    private Map<String, Object> buildSpotAnalysisRequest(String message) {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", doubaoConfig.getModelName());
+
+        List<Map<String, String>> messages = new ArrayList<>();
+
+        Map<String, String> systemMessage = new HashMap<>();
+        systemMessage.put("role", "system");
+        systemMessage.put("content", SPOT_ANALYSIS_PROMPT);
+        messages.add(systemMessage);
+
+        Map<String, String> userMessage = new HashMap<>();
+        userMessage.put("role", "user");
+        userMessage.put("content", message);
+        messages.add(userMessage);
+
+        requestBody.put("messages", messages);
+        requestBody.put("stream", true);
+        requestBody.put("temperature", 0.7);
+        requestBody.put("max_tokens", 200);
+
+        return requestBody;
+    }
+
+    /**
+     * 获取钓点类型文本
+     */
+    private String getSpotTypeText(Integer spotType) {
+        if (spotType == null) return "未知类型";
+        return switch (spotType) {
+            case 0 -> "野钓点";
+            case 1 -> "黑坑/收费钓场";
+            case 2 -> "路亚基地";
+            default -> "未知类型";
+        };
     }
 }

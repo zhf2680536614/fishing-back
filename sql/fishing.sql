@@ -187,10 +187,62 @@ CREATE TABLE `biz_gear_market` (
     `price` decimal(10, 2) NOT NULL COMMENT '价格',
     `original_price` decimal(10, 2) DEFAULT NULL COMMENT '原价',
     `images` json DEFAULT NULL COMMENT '商品图片',
+    `category` varchar(20) DEFAULT NULL COMMENT '装备分类: rod-鱼竿, box-钓箱, bait-饵料, other-其他',
     `status` tinyint DEFAULT 0 COMMENT '状态: 0-在售, 1-已售出, 2-下架',
     `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
     `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `is_deleted` tinyint DEFAULT 0,
     PRIMARY KEY (`id`),
-    KEY `idx_user_id` (`user_id`)
+    KEY `idx_user_id` (`user_id`),
+    KEY `idx_category` (`category`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '二手装备交易表';
+
+-- 表：装备测评表
+DROP TABLE IF EXISTS `biz_gear_review`;
+
+CREATE TABLE `biz_gear_review` (
+    `id` bigint NOT NULL COMMENT '主键ID',
+    `user_id` bigint NOT NULL COMMENT '测评用户ID',
+    `title` varchar(100) NOT NULL COMMENT '测评标题',
+    `content` text NOT NULL COMMENT '测评内容',
+    `rating` decimal(2, 1) NOT NULL COMMENT '评分 (1-5分)',
+    `gear_name` varchar(100) NOT NULL COMMENT '装备名称',
+    `category` varchar(20) DEFAULT NULL COMMENT '装备分类: rod-鱼竿, box-钓箱, bait-饵料, other-其他',
+    `views` int DEFAULT 0 COMMENT '浏览量',
+    `likes` int DEFAULT 0 COMMENT '点赞量',
+    `comments` int DEFAULT 0 COMMENT '评论量',
+    `ai_analysis` json DEFAULT NULL COMMENT 'AI分析结果',
+    `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
+    `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `is_deleted` tinyint DEFAULT 0,
+    PRIMARY KEY (`id`),
+    KEY `idx_user_id` (`user_id`),
+    KEY `idx_category` (`category`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '装备测评表';
+
+-- 表：测评点赞记录表
+DROP TABLE IF EXISTS `biz_review_like`;
+
+CREATE TABLE `biz_review_like` (
+    `id` bigint NOT NULL COMMENT '主键ID',
+    `review_id` bigint NOT NULL COMMENT '测评ID',
+    `user_id` bigint NOT NULL COMMENT '用户ID',
+    `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_review_user` (`review_id`, `user_id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '测评点赞记录表';
+
+-- 表：测评评论表
+DROP TABLE IF EXISTS `biz_review_comment`;
+
+CREATE TABLE `biz_review_comment` (
+    `id` bigint NOT NULL COMMENT '主键ID',
+    `review_id` bigint NOT NULL COMMENT '测评ID',
+    `user_id` bigint NOT NULL COMMENT '评论者ID',
+    `content` varchar(500) NOT NULL COMMENT '评论内容',
+    `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
+    `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `is_deleted` tinyint DEFAULT 0,
+    PRIMARY KEY (`id`),
+    KEY `idx_review_id` (`review_id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '测评评论表';
