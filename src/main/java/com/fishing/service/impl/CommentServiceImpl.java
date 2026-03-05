@@ -43,7 +43,8 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, CommentEntity
         entity.setUserId(userId);
         entity.setParentId(dto.getParentId() != null ? dto.getParentId() : 0L);
         entity.setContent(dto.getContent());
-        entity.setIsAiGenerated(0);
+        entity.setIsAiGeneratedDictTypeCode("ai_generated");
+        entity.setIsAiGeneratedDictItemCode("no");
 
         commentMapper.insert(entity);
 
@@ -93,7 +94,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, CommentEntity
     private CommentVO convertToVO(CommentEntity entity) {
         CommentVO vo = new CommentVO();
         BeanUtils.copyProperties(entity, vo);
-        vo.setIsAiGenerated(entity.getIsAiGenerated() == 1);
+        vo.setIsAiGenerated("yes".equals(entity.getIsAiGeneratedDictItemCode()));
 
         UserEntity user = userMapper.selectById(entity.getUserId());
         if (user != null) {

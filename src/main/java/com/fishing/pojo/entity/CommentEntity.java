@@ -20,7 +20,9 @@ public class CommentEntity implements Serializable {
 
     private String content;
 
-    private Integer isAiGenerated;
+    private String isAiGeneratedDictTypeCode;
+
+    private String isAiGeneratedDictItemCode;
 
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
