@@ -7,6 +7,7 @@ import java.util.List;
 
 @Data
 public class GearMarketDTO {
+    private Long userId;
     private String title;
     private String description;
     private BigDecimal price;

@@ -1,9 +1,13 @@
 package com.fishing.controller;
 
+import com.fishing.pojo.PageResult;
 import com.fishing.pojo.dto.UserLoginDTO;
+import com.fishing.pojo.dto.UserManageUpdateDTO;
 import com.fishing.pojo.dto.UserRegisterDTO;
 import com.fishing.pojo.dto.UserUpdateDTO;
 import com.fishing.pojo.Result;
+import com.fishing.pojo.query.UserPageQuery;
+import com.fishing.pojo.vo.UserManageVO;
 import com.fishing.pojo.vo.UserProfileVO;
 import com.fishing.pojo.vo.UserVO;
 import com.fishing.service.UserService;
@@ -61,5 +65,33 @@ public class UserController {
     public Result<?> getUserBadges(@PathVariable Long id) {
         log.info("获取用户勋章：{}", id);
         return Result.success(userService.getUserBadges(id));
+    }
+
+    @PostMapping("/page")
+    public Result<PageResult<UserManageVO>> page(@RequestBody UserPageQuery query) {
+        log.info("分页查询用户列表：{}", query);
+        PageResult<UserManageVO> pageResult = userService.page(query);
+        return Result.success(pageResult);
+    }
+
+    @GetMapping("/manage/{id}")
+    public Result<UserManageVO> getUserManageById(@PathVariable Long id) {
+        log.info("获取用户管理详情：{}", id);
+        UserManageVO userManageVO = userService.getUserManageById(id);
+        return Result.success(userManageVO);
+    }
+
+    @PutMapping("/manage/{id}")
+    public Result<Void> updateUserManage(@PathVariable Long id, @RequestBody UserManageUpdateDTO dto) {
+        log.info("更新用户管理信息：{}", id);
+        userService.updateUserManage(id, dto);
+        return Result.success();
+    }
+
+    @DeleteMapping("/{id}")
+    public Result<Void> deleteUser(@PathVariable Long id) {
+        log.info("删除用户：{}", id);
+        userService.deleteUser(id);
+        return Result.success();
     }
 }

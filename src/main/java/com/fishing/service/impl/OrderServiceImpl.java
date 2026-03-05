@@ -1,30 +1,47 @@
 package com.fishing.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fishing.exception.BusinessException;
 import com.fishing.mapper.GearMarketMapper;
 import com.fishing.mapper.OrderMapper;
+import com.fishing.mapper.UserMapper;
 import com.fishing.pojo.dto.CreateOrderDTO;
+import com.fishing.pojo.dto.OrderUpdateStatusDTO;
 import com.fishing.pojo.entity.GearMarketEntity;
 import com.fishing.pojo.entity.OrderEntity;
+import com.fishing.pojo.entity.UserEntity;
+import com.fishing.pojo.query.OrderPageQuery;
+import com.fishing.pojo.vo.OrderManageVO;
 import com.fishing.pojo.vo.OrderVO;
+import com.fishing.pojo.PageResult;
+import com.fishing.service.DictService;
 import com.fishing.service.OrderService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderEntity> implements OrderService {
 
     @Autowired
     private GearMarketMapper gearMarketMapper;
+
+    @Autowired
+    private UserMapper userMapper;
+
+    @Autowired
+    private DictService dictService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -177,6 +194,110 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderEntity> impl
                 vo.setGearImages(gear.getImages());
             }
         }
+        return vo;
+    }
+
+    @Override
+    public PageResult<OrderManageVO> page(OrderPageQuery query) {
+        Page<OrderEntity> page = new Page<>(query.getPageNum(), query.getPageSize());
+        LambdaQueryWrapper<OrderEntity> wrapper = new LambdaQueryWrapper<>();
+
+        // 装备标题模糊查询
+        if (StringUtils.hasText(query.getGearTitle())) {
+            wrapper.like(OrderEntity::getGearTitle, query.getGearTitle());
+        }
+
+        // 状态筛选
+        if (StringUtils.hasText(query.getStatusDictItemCode())) {
+            wrapper.eq(OrderEntity::getStatusDictItemCode, query.getStatusDictItemCode());
+        }
+
+        // 用户ID筛选
+        if (query.getUserId() != null) {
+            wrapper.eq(OrderEntity::getUserId, query.getUserId());
+        }
+
+        // 联系电话模糊查询
+        if (StringUtils.hasText(query.getContactPhone())) {
+            wrapper.like(OrderEntity::getContactPhone, query.getContactPhone());
+        }
+
+        // 时间范围筛选
+        if (StringUtils.hasText(query.getStartTime())) {
+            wrapper.ge(OrderEntity::getCreateTime, query.getStartTime());
+        }
+        if (StringUtils.hasText(query.getEndTime())) {
+            wrapper.le(OrderEntity::getCreateTime, query.getEndTime());
+        }
+
+        wrapper.eq(OrderEntity::getIsDeleted, 0)
+                .orderByDesc(OrderEntity::getCreateTime);
+
+        IPage<OrderEntity> entityPage = baseMapper.selectPage(page, wrapper);
+        List<OrderManageVO> voList = entityPage.getRecords().stream()
+                .map(this::convertToManageVO)
+                .collect(Collectors.toList());
+
+        PageResult<OrderManageVO> result = new PageResult<>();
+        result.setList(voList);
+        result.setTotal(entityPage.getTotal());
+        result.setPageNum(entityPage.getCurrent());
+        result.setPageSize(entityPage.getSize());
+        return result;
+    }
+
+    @Override
+    public OrderManageVO getOrderManageById(Long id) {
+        OrderEntity order = this.getById(id);
+        if (order == null) {
+            throw new BusinessException("订单不存在");
+        }
+        return convertToManageVO(order);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateOrderStatus(Long id, OrderUpdateStatusDTO dto) {
+        OrderEntity order = this.getById(id);
+        if (order == null) {
+            throw new BusinessException("订单不存在");
+        }
+
+        order.setStatusDictTypeCode(dto.getStatusDictTypeCode());
+        order.setStatusDictItemCode(dto.getStatusDictItemCode());
+        this.updateById(order);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteOrderManage(Long id) {
+        OrderEntity order = this.getById(id);
+        if (order == null) {
+            throw new BusinessException("订单不存在");
+        }
+
+        this.removeById(id);
+    }
+
+    private OrderManageVO convertToManageVO(OrderEntity order) {
+        OrderManageVO vo = new OrderManageVO();
+        BeanUtils.copyProperties(order, vo);
+
+        // 获取用户信息
+        UserEntity user = userMapper.selectById(order.getUserId());
+        if (user != null) {
+            vo.setUsername(user.getUsername());
+            vo.setNickname(user.getNickname());
+            vo.setAvatar(user.getAvatar());
+            vo.setPhone(user.getPhone());
+        }
+
+        // 获取订单状态名称
+        if (StringUtils.hasText(order.getStatusDictItemCode())) {
+            String statusName = dictService.getItemName("order_status", order.getStatusDictItemCode());
+            vo.setStatusDictItemName(statusName);
+        }
+
         return vo;
     }
 }

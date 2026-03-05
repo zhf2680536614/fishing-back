@@ -1,8 +1,11 @@
 package com.fishing.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fishing.pojo.PageResult;
 import com.fishing.pojo.dto.GearMarketDTO;
+import com.fishing.pojo.query.GearMarketPageQuery;
 import com.fishing.pojo.Result;
+import com.fishing.pojo.vo.GearMarketManageVO;
 import com.fishing.pojo.vo.GearMarketVO;
 import com.fishing.service.GearMarketService;
 import com.fishing.utils.JwtUtils;
@@ -93,4 +96,58 @@ public class GearMarketController {
         return 1L;
     }
 
+    // ==================== 管理后台接口 ====================
+
+    /**
+     * 分页查询装备交易列表（管理后台）
+     */
+    @PostMapping("/manage/page")
+    public Result<PageResult<GearMarketManageVO>> managePage(@RequestBody GearMarketPageQuery query) {
+        log.info("分页查询装备交易列表（管理后台）：{}", query);
+        PageResult<GearMarketManageVO> pageResult = gearMarketService.page(query);
+        return Result.success(pageResult);
+    }
+
+    /**
+     * 根据ID获取装备交易管理详情
+     */
+    @GetMapping("/manage/{id}")
+    public Result<GearMarketManageVO> getGearMarketManageById(@PathVariable Long id) {
+        log.info("获取装备交易管理详情：{}", id);
+        GearMarketManageVO vo = gearMarketService.getGearMarketManageById(id);
+        if (vo == null) {
+            return Result.error("装备不存在");
+        }
+        return Result.success(vo);
+    }
+
+    /**
+     * 保存装备交易（管理后台）
+     */
+    @PostMapping("/manage")
+    public Result<Void> saveGearMarket(@RequestBody GearMarketDTO dto) {
+        log.info("保存装备交易（管理后台）：{}", dto.getTitle());
+        gearMarketService.saveGearMarket(dto);
+        return Result.success();
+    }
+
+    /**
+     * 更新装备交易（管理后台）
+     */
+    @PutMapping("/manage/{id}")
+    public Result<Void> updateGearMarket(@PathVariable Long id, @RequestBody GearMarketDTO dto) {
+        log.info("更新装备交易（管理后台）：{}", id);
+        gearMarketService.updateGearMarket(id, dto);
+        return Result.success();
+    }
+
+    /**
+     * 删除装备交易（管理后台）
+     */
+    @DeleteMapping("/manage/{id}")
+    public Result<Void> deleteGearMarket(@PathVariable Long id) {
+        log.info("删除装备交易（管理后台）：{}", id);
+        gearMarketService.deleteGearMarket(id);
+        return Result.success();
+    }
 }

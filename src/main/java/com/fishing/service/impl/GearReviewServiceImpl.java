@@ -1,20 +1,28 @@
 package com.fishing.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fishing.exception.BusinessException;
 import com.fishing.mapper.GearReviewMapper;
 import com.fishing.mapper.UserMapper;
+import com.fishing.pojo.PageResult;
 import com.fishing.pojo.dto.GearReviewDTO;
 import com.fishing.pojo.entity.GearReviewEntity;
 import com.fishing.pojo.entity.UserEntity;
+import com.fishing.pojo.query.GearReviewPageQuery;
+import com.fishing.pojo.vo.GearReviewManageVO;
 import com.fishing.pojo.vo.GearReviewVO;
+import com.fishing.service.DictService;
 import com.fishing.service.GearReviewService;
 import com.fishing.utils.MinioUtils;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,9 +32,11 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class GearReviewServiceImpl implements GearReviewService {
     private final GearReviewMapper gearReviewMapper;
     private final UserMapper userMapper;
+    private final DictService dictService;
     private final MinioUtils minioUtils;
     private final Gson gson = new Gson();
 
@@ -177,5 +187,160 @@ public class GearReviewServiceImpl implements GearReviewService {
         analysis.put("keywords", keywords);
         
         return gson.toJson(analysis);
+    }
+
+    // ==================== 管理后台方法 ====================
+
+    @Override
+    public PageResult<GearReviewManageVO> page(GearReviewPageQuery query) {
+        Page<GearReviewEntity> page = new Page<>(query.getPageNum(), query.getPageSize());
+        LambdaQueryWrapper<GearReviewEntity> wrapper = new LambdaQueryWrapper<>();
+
+        // 标题模糊查询
+        if (StringUtils.hasText(query.getTitle())) {
+            wrapper.like(GearReviewEntity::getTitle, query.getTitle());
+        }
+
+        // 装备名称模糊查询
+        if (StringUtils.hasText(query.getGearName())) {
+            wrapper.like(GearReviewEntity::getGearName, query.getGearName());
+        }
+
+        // 分类筛选
+        if (StringUtils.hasText(query.getCategoryDictItemCode())) {
+            wrapper.eq(GearReviewEntity::getCategoryDictItemCode, query.getCategoryDictItemCode());
+        }
+
+        // 状态筛选
+        if (StringUtils.hasText(query.getStatusDictItemCode())) {
+            wrapper.eq(GearReviewEntity::getStatusDictItemCode, query.getStatusDictItemCode());
+        }
+
+        // 用户ID筛选
+        if (query.getUserId() != null) {
+            wrapper.eq(GearReviewEntity::getUserId, query.getUserId());
+        }
+
+        wrapper.eq(GearReviewEntity::getIsDeleted, 0)
+                .orderByDesc(GearReviewEntity::getCreateTime);
+
+        IPage<GearReviewEntity> entityPage = gearReviewMapper.selectPage(page, wrapper);
+        List<GearReviewManageVO> voList = entityPage.getRecords().stream()
+                .map(this::convertToManageVO)
+                .collect(Collectors.toList());
+
+        PageResult<GearReviewManageVO> result = new PageResult<>();
+        result.setList(voList);
+        result.setTotal(entityPage.getTotal());
+        result.setPageNum(entityPage.getCurrent());
+        result.setPageSize(entityPage.getSize());
+        return result;
+    }
+
+    @Override
+    public GearReviewManageVO getGearReviewManageById(Long id) {
+        GearReviewEntity entity = gearReviewMapper.selectById(id);
+        if (entity == null || entity.getIsDeleted() == 1) {
+            return null;
+        }
+        return convertToManageVO(entity);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateGearReview(Long id, GearReviewDTO dto) {
+        GearReviewEntity entity = gearReviewMapper.selectById(id);
+        if (entity == null || entity.getIsDeleted() == 1) {
+            throw new BusinessException("测评不存在");
+        }
+
+        // 更新字段
+        if (StringUtils.hasText(dto.getTitle())) {
+            entity.setTitle(dto.getTitle());
+        }
+        if (StringUtils.hasText(dto.getContent())) {
+            entity.setContent(dto.getContent());
+        }
+        if (dto.getRating() != null) {
+            entity.setRating(dto.getRating());
+        }
+        if (StringUtils.hasText(dto.getGearName())) {
+            entity.setGearName(dto.getGearName());
+        }
+        if (StringUtils.hasText(dto.getCategoryDictTypeCode())) {
+            entity.setCategoryDictTypeCode(dto.getCategoryDictTypeCode());
+        }
+        if (StringUtils.hasText(dto.getCategoryDictItemCode())) {
+            entity.setCategoryDictItemCode(dto.getCategoryDictItemCode());
+        }
+        if (StringUtils.hasText(dto.getStatusDictTypeCode())) {
+            entity.setStatusDictTypeCode(dto.getStatusDictTypeCode());
+        }
+        if (StringUtils.hasText(dto.getStatusDictItemCode())) {
+            entity.setStatusDictItemCode(dto.getStatusDictItemCode());
+        }
+        if (dto.getImages() != null) {
+            entity.setImages(gson.toJson(dto.getImages()));
+        }
+
+        gearReviewMapper.updateById(entity);
+        log.info("更新装备测评成功，ID：{}", id);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteGearReview(Long id) {
+        GearReviewEntity entity = gearReviewMapper.selectById(id);
+        if (entity == null || entity.getIsDeleted() == 1) {
+            throw new BusinessException("测评不存在");
+        }
+
+        entity.setIsDeleted(1);
+        gearReviewMapper.updateById(entity);
+        log.info("删除装备测评成功，ID：{}", id);
+    }
+
+    private GearReviewManageVO convertToManageVO(GearReviewEntity entity) {
+        GearReviewManageVO vo = new GearReviewManageVO();
+        vo.setId(entity.getId());
+        vo.setUserId(entity.getUserId());
+        vo.setTitle(entity.getTitle());
+        vo.setContent(entity.getContent());
+        vo.setRating(entity.getRating());
+        vo.setGearName(entity.getGearName());
+        vo.setCategoryDictTypeCode(entity.getCategoryDictTypeCode());
+        vo.setCategoryDictItemCode(entity.getCategoryDictItemCode());
+        vo.setStatusDictTypeCode(entity.getStatusDictTypeCode());
+        vo.setStatusDictItemCode(entity.getStatusDictItemCode());
+        vo.setCreateTime(entity.getCreateTime());
+        vo.setUpdateTime(entity.getUpdateTime());
+
+        // 获取用户信息
+        UserEntity user = userMapper.selectById(entity.getUserId());
+        if (user != null) {
+            vo.setUsername(user.getUsername());
+            vo.setNickname(user.getNickname());
+            vo.setAvatar(minioUtils.getFullUrl(user.getAvatar(), "user_avatar"));
+        }
+
+        // 解析图片JSON
+        if (entity.getImages() != null) {
+            vo.setImages(gson.fromJson(entity.getImages(), new TypeToken<List<String>>(){}.getType()));
+        }
+
+        // 解析AI分析JSON
+        if (entity.getAiAnalysis() != null) {
+            vo.setAiAnalysis(gson.fromJson(entity.getAiAnalysis(), new TypeToken<Map<String, Object>>(){}.getType()));
+        }
+
+        // 获取字典项名称
+        if (entity.getCategoryDictTypeCode() != null && entity.getCategoryDictItemCode() != null) {
+            vo.setCategoryDictItemName(dictService.getItemName(entity.getCategoryDictTypeCode(), entity.getCategoryDictItemCode()));
+        }
+        if (entity.getStatusDictTypeCode() != null && entity.getStatusDictItemCode() != null) {
+            vo.setStatusDictItemName(dictService.getItemName(entity.getStatusDictTypeCode(), entity.getStatusDictItemCode()));
+        }
+
+        return vo;
     }
 }

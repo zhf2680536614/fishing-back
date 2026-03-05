@@ -32,6 +32,12 @@ public class MinioUtils {
     @Value("${file.user-avatar-dir}")
     private String userAvatarDir;
 
+    @Value("${file.spot-image-dir:spot_image}")
+    private String spotImageDir;
+
+    @Value("${file.gear-image-dir:gear_image}")
+    private String gearImageDir;
+
     public MinioUtils(MinioClient minioClient) {
         this.minioClient = minioClient;
     }
@@ -84,6 +90,20 @@ public class MinioUtils {
      */
     public String uploadUserAvatar(MultipartFile file) {
         return uploadFile(file, userAvatarDir);
+    }
+
+    /**
+     * 上传钓点图片
+     */
+    public String uploadSpotImage(MultipartFile file) {
+        return uploadFile(file, spotImageDir);
+    }
+
+    /**
+     * 上传装备图片
+     */
+    public String uploadGearImage(MultipartFile file) {
+        return uploadFile(file, gearImageDir);
     }
 
     /**

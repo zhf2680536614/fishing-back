@@ -12,7 +12,8 @@ INSERT INTO `fish_club_db`.`sys_dict_type` (`dict_code`, `dict_name`, `parent_id
 ('ai_audit_status', 'AI审核状态', 0, 'AI内容审核状态', 10),
 ('ai_function_type', 'AI功能类型', 0, 'AI调用功能类型', 11),
 ('common_status', '通用状态', 0, '通用启用禁用状态', 12),
-('fish_species', '鱼种分类', 0, '常见鱼种分类', 13);
+('fish_species', '鱼种分类', 0, '常见鱼种分类', 13),
+('ai_generated', 'AI生成', 0, '是否AI生成内容', 14);
 
 -- 插入用户角色字典项
 INSERT INTO `fish_club_db`.`sys_dict_item` (`dict_type_id`, `item_code`, `item_name`, `value`, `sort_order`) VALUES
@@ -155,3 +156,8 @@ INSERT INTO `fish_club_db`.`sys_dict_item` (`dict_type_id`, `item_code`, `item_n
 (13, 'sole', '舌鳎', '58', 58, '海水鱼，比目鱼科'),
 (13, 'croaker', '白姑鱼', '59', 59, '海水鱼，石首鱼科'),
 (13, 'drum', '美国红鼓鱼', '60', 60, '海水鱼，外来引进品种');
+
+-- 插入AI生成字典项
+INSERT INTO `fish_club_db`.`sys_dict_item` (`dict_type_id`, `item_code`, `item_name`, `value`, `sort_order`) VALUES
+(14, 'yes', '是', '1', 1),
+(14, 'no', '否', '2', 2);

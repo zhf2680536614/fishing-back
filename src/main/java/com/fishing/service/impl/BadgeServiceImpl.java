@@ -1,13 +1,21 @@
 package com.fishing.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.fishing.mapper.BadgeDefinitionMapper;
 import com.fishing.mapper.UserBadgeMapper;
+import com.fishing.pojo.PageResult;
+import com.fishing.pojo.dto.BadgeDTO;
 import com.fishing.pojo.entity.BadgeDefinitionEntity;
 import com.fishing.pojo.entity.UserBadgeEntity;
+import com.fishing.pojo.query.BadgePageQuery;
+import com.fishing.pojo.vo.BadgeManageVO;
 import com.fishing.service.BadgeService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import jakarta.annotation.Resource;
 import java.time.LocalDateTime;
@@ -133,5 +141,100 @@ public class BadgeServiceImpl implements BadgeService {
             }
         }
         return unobtainedBadges;
+    }
+
+    @Override
+    public PageResult<BadgeManageVO> page(BadgePageQuery query) {
+        Page<BadgeDefinitionEntity> page = new Page<>(query.getPageNum(), query.getPageSize());
+        LambdaQueryWrapper<BadgeDefinitionEntity> wrapper = new LambdaQueryWrapper<>();
+        
+        // 勋章名称模糊查询
+        if (StringUtils.hasText(query.getBadgeName())) {
+            wrapper.like(BadgeDefinitionEntity::getBadgeName, query.getBadgeName());
+        }
+        
+        // 需求类型筛选
+        if (StringUtils.hasText(query.getRequirementType())) {
+            wrapper.eq(BadgeDefinitionEntity::getRequirementType, query.getRequirementType());
+        }
+        
+        wrapper.eq(BadgeDefinitionEntity::getIsDeleted, 0)
+                .orderByAsc(BadgeDefinitionEntity::getSortOrder);
+        
+        IPage<BadgeDefinitionEntity> entityPage = badgeDefinitionMapper.selectPage(page, wrapper);
+        List<BadgeManageVO> voList = entityPage.getRecords().stream()
+                .map(this::convertToManageVO)
+                .collect(Collectors.toList());
+        
+        PageResult<BadgeManageVO> result = new PageResult<>();
+        result.setList(voList);
+        result.setTotal(entityPage.getTotal());
+        result.setPageNum(entityPage.getCurrent());
+        result.setPageSize(entityPage.getSize());
+        return result;
+    }
+
+    @Override
+    public BadgeManageVO getBadgeManageById(Long id) {
+        BadgeDefinitionEntity entity = badgeDefinitionMapper.selectById(id);
+        if (entity == null || entity.getIsDeleted() == 1) {
+            return null;
+        }
+        return convertToManageVO(entity);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void createBadge(BadgeDTO dto) {
+        BadgeDefinitionEntity entity = new BadgeDefinitionEntity();
+        entity.setBadgeName(dto.getBadgeName());
+        entity.setBadgeIcon(dto.getBadgeIcon());
+        entity.setDescription(dto.getDescription());
+        entity.setRequirementType(dto.getRequirementType());
+        entity.setRequirementValue(dto.getRequirementValue());
+        entity.setSortOrder(dto.getSortOrder());
+        entity.setIsDeleted(0);
+        badgeDefinitionMapper.insert(entity);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateBadge(Long id, BadgeDTO dto) {
+        BadgeDefinitionEntity entity = badgeDefinitionMapper.selectById(id);
+        if (entity == null || entity.getIsDeleted() == 1) {
+            throw new com.fishing.exception.BusinessException("勋章不存在");
+        }
+        entity.setBadgeName(dto.getBadgeName());
+        entity.setBadgeIcon(dto.getBadgeIcon());
+        entity.setDescription(dto.getDescription());
+        entity.setRequirementType(dto.getRequirementType());
+        entity.setRequirementValue(dto.getRequirementValue());
+        entity.setSortOrder(dto.getSortOrder());
+        badgeDefinitionMapper.updateById(entity);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteBadge(Long id) {
+        BadgeDefinitionEntity entity = badgeDefinitionMapper.selectById(id);
+        if (entity == null || entity.getIsDeleted() == 1) {
+            throw new com.fishing.exception.BusinessException("勋章不存在");
+        }
+        entity.setIsDeleted(1);
+        badgeDefinitionMapper.updateById(entity);
+    }
+
+    private BadgeManageVO convertToManageVO(BadgeDefinitionEntity entity) {
+        BadgeManageVO vo = new BadgeManageVO();
+        vo.setId(entity.getId());
+        vo.setBadgeName(entity.getBadgeName());
+        vo.setBadgeIcon(entity.getBadgeIcon());
+        vo.setDescription(entity.getDescription());
+        vo.setRequirementType(entity.getRequirementType());
+        vo.setRequirementValue(entity.getRequirementValue());
+        vo.setSortOrder(entity.getSortOrder());
+        vo.setCreateTime(entity.getCreateTime());
+        vo.setUpdateTime(entity.getUpdateTime());
+        return vo;
     }
 }

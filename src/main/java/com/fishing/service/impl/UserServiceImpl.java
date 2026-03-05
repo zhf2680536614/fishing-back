@@ -1,15 +1,22 @@
 package com.fishing.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fishing.exception.BusinessException;
+import com.fishing.mapper.DictItemMapper;
 import com.fishing.mapper.PostMapper;
 import com.fishing.mapper.UserBadgeMapper;
 import com.fishing.mapper.UserMapper;
+import com.fishing.pojo.PageResult;
 import com.fishing.pojo.dto.UserLoginDTO;
+import com.fishing.pojo.dto.UserManageUpdateDTO;
 import com.fishing.pojo.dto.UserRegisterDTO;
 import com.fishing.pojo.dto.UserUpdateDTO;
+import com.fishing.pojo.entity.DictItemEntity;
 import com.fishing.pojo.entity.UserEntity;
+import com.fishing.pojo.query.UserPageQuery;
+import com.fishing.pojo.vo.UserManageVO;
 import com.fishing.pojo.vo.UserProfileVO;
 import com.fishing.pojo.vo.UserVO;
 import com.fishing.service.BadgeService;
@@ -23,7 +30,9 @@ import org.springframework.util.DigestUtils;
 import jakarta.annotation.Resource;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -37,6 +46,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
 
     @Resource
     private BadgeService badgeService;
+
+    @Resource
+    private DictItemMapper dictItemMapper;
 
     @Override
     public UserVO login(UserLoginDTO loginDTO) {
@@ -175,13 +187,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
 
     @Override
     public Map<String, Object> getUserBadges(Long userId) {
-        // 获取用户钓鱼数据
         Integer fishingDays = postMapper.countFishingDays(userId);
         Integer fishDays = postMapper.countFishDays(userId);
         Integer airForceDays = postMapper.countAirForce(userId);
         Double totalWeight = postMapper.sumFishWeight(userId);
 
-        // 检查并颁发勋章
         badgeService.checkAndAwardBadges(
                 userId,
                 fishingDays != null ? fishingDays : 0,
@@ -190,9 +200,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
                 totalWeight != null ? totalWeight : 0.0
         );
 
-        // 获取已获得的勋章
         var obtainedBadges = badgeService.getUserBadges(userId);
-        // 获取未获得的勋章
         var unobtainedBadges = badgeService.getUnobtainedBadges(
                 userId,
                 fishingDays != null ? fishingDays : 0,
@@ -205,5 +213,117 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
         result.put("obtained", obtainedBadges);
         result.put("unobtained", unobtainedBadges);
         return result;
+    }
+
+    @Override
+    public PageResult<UserManageVO> page(UserPageQuery query) {
+        LambdaQueryWrapper<UserEntity> wrapper = new LambdaQueryWrapper<>();
+        
+        if (query.getUsername() != null && !query.getUsername().isEmpty()) {
+            wrapper.like(UserEntity::getUsername, query.getUsername());
+        }
+        if (query.getNickname() != null && !query.getNickname().isEmpty()) {
+            wrapper.like(UserEntity::getNickname, query.getNickname());
+        }
+        if (query.getPhone() != null && !query.getPhone().isEmpty()) {
+            wrapper.like(UserEntity::getPhone, query.getPhone());
+        }
+        if (query.getRoleDictItemCode() != null && !query.getRoleDictItemCode().isEmpty()) {
+            wrapper.eq(UserEntity::getRoleDictItemCode, query.getRoleDictItemCode());
+        }
+        if (query.getStatusDictItemCode() != null && !query.getStatusDictItemCode().isEmpty()) {
+            wrapper.eq(UserEntity::getStatusDictItemCode, query.getStatusDictItemCode());
+        }
+        
+        wrapper.orderByDesc(UserEntity::getCreateTime);
+        
+        Page<UserEntity> page = this.page(new Page<>(query.getPageNum(), query.getPageSize()), wrapper);
+        
+        List<UserManageVO> voList = page.getRecords().stream().map(this::convertToManageVO).collect(Collectors.toList());
+        
+        PageResult<UserManageVO> pageResult = new PageResult<>();
+        pageResult.setList(voList);
+        pageResult.setTotal(page.getTotal());
+        pageResult.setPageNum(page.getCurrent());
+        pageResult.setPageSize(page.getSize());
+        
+        return pageResult;
+    }
+
+    @Override
+    public UserManageVO getUserManageById(Long id) {
+        UserEntity user = this.getById(id);
+        if (user == null) {
+            throw new BusinessException("用户不存在");
+        }
+        return convertToManageVO(user);
+    }
+
+    @Override
+    public void updateUserManage(Long id, UserManageUpdateDTO dto) {
+        UserEntity user = this.getById(id);
+        if (user == null) {
+            throw new BusinessException("用户不存在");
+        }
+        
+        if (dto.getNickname() != null) {
+            user.setNickname(dto.getNickname());
+        }
+        if (dto.getAvatar() != null) {
+            user.setAvatar(dto.getAvatar());
+        }
+        if (dto.getPhone() != null) {
+            user.setPhone(dto.getPhone());
+        }
+        if (dto.getSignature() != null) {
+            user.setSignature(dto.getSignature());
+        }
+        if (dto.getRoleDictTypeCode() != null) {
+            user.setRoleDictTypeCode(dto.getRoleDictTypeCode());
+        }
+        if (dto.getRoleDictItemCode() != null) {
+            user.setRoleDictItemCode(dto.getRoleDictItemCode());
+        }
+        if (dto.getStatusDictTypeCode() != null) {
+            user.setStatusDictTypeCode(dto.getStatusDictTypeCode());
+        }
+        if (dto.getStatusDictItemCode() != null) {
+            user.setStatusDictItemCode(dto.getStatusDictItemCode());
+        }
+        
+        this.updateById(user);
+    }
+
+    @Override
+    public void deleteUser(Long id) {
+        UserEntity user = this.getById(id);
+        if (user == null) {
+            throw new BusinessException("用户不存在");
+        }
+        
+        this.removeById(id);
+    }
+
+    private UserManageVO convertToManageVO(UserEntity entity) {
+        UserManageVO vo = new UserManageVO();
+        BeanUtils.copyProperties(entity, vo);
+        
+        List<DictItemEntity> roleItems = dictItemMapper.selectByDictCode("user_role");
+        if (roleItems != null) {
+            roleItems.stream()
+                .filter(item -> item.getItemCode().equals(entity.getRoleDictItemCode()))
+                .findFirst()
+                .ifPresent(item -> vo.setRoleDictItemName(item.getItemName()));
+        }
+        
+        List<DictItemEntity> statusItems = dictItemMapper.selectByDictCode("user_status");
+        if (statusItems != null) {
+            statusItems.stream()
+                .filter(item -> item.getItemCode().equals(entity.getStatusDictItemCode()))
+                .findFirst()
+                .ifPresent(item -> vo.setStatusDictItemName(item.getItemName()));
+        }
+        
+        return vo;
     }
 }

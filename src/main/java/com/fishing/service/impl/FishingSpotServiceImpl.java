@@ -1,10 +1,21 @@
 package com.fishing.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.fishing.exception.BusinessException;
 import com.fishing.mapper.FishingSpotMapper;
+import com.fishing.mapper.UserMapper;
+import com.fishing.pojo.PageResult;
+import com.fishing.pojo.dto.FishingSpotCreateDTO;
+import com.fishing.pojo.dto.FishingSpotUpdateDTO;
 import com.fishing.pojo.entity.FishingSpotEntity;
+import com.fishing.pojo.entity.UserEntity;
+import com.fishing.pojo.query.FishingSpotPageQuery;
+import com.fishing.pojo.vo.FishingSpotManageVO;
 import com.fishing.pojo.vo.FishingSpotVO;
+import com.fishing.service.DictService;
 import com.fishing.service.FishingSpotService;
 import com.fishing.utils.MinioUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -27,6 +38,12 @@ public class FishingSpotServiceImpl extends ServiceImpl<FishingSpotMapper, Fishi
 
     @Autowired
     private MinioUtils minioUtils;
+
+    @Autowired
+    private UserMapper userMapper;
+
+    @Autowired
+    private DictService dictService;
 
     @Value("${file.spot-image-dir:spot_image}")
     private String spotImageDir;
@@ -196,5 +213,178 @@ public class FishingSpotServiceImpl extends ServiceImpl<FishingSpotMapper, Fishi
         }
 
         return entity.getBestPositionDesc();
+    }
+
+    @Override
+    public PageResult<FishingSpotManageVO> page(FishingSpotPageQuery query) {
+        Page<FishingSpotEntity> page = new Page<>(query.getPageNum(), query.getPageSize());
+        LambdaQueryWrapper<FishingSpotEntity> wrapper = new LambdaQueryWrapper<>();
+        
+        // 名称模糊查询
+        if (StringUtils.hasText(query.getName())) {
+            wrapper.like(FishingSpotEntity::getName, query.getName());
+        }
+        // 省份查询
+        if (StringUtils.hasText(query.getProvince())) {
+            wrapper.like(FishingSpotEntity::getProvince, query.getProvince());
+        }
+        // 城市查询
+        if (StringUtils.hasText(query.getCity())) {
+            wrapper.like(FishingSpotEntity::getCity, query.getCity());
+        }
+        // 类型筛选
+        if (StringUtils.hasText(query.getTypeDictItemCode())) {
+            wrapper.eq(FishingSpotEntity::getTypeDictItemCode, query.getTypeDictItemCode());
+        }
+        // 状态筛选
+        if (StringUtils.hasText(query.getStatusDictItemCode())) {
+            wrapper.eq(FishingSpotEntity::getStatusDictItemCode, query.getStatusDictItemCode());
+        }
+        // 未删除
+        wrapper.eq(FishingSpotEntity::getIsDeleted, 0);
+        wrapper.orderByDesc(FishingSpotEntity::getCreateTime);
+
+        IPage<FishingSpotEntity> entityPage = this.page(page, wrapper);
+        List<FishingSpotManageVO> voList = entityPage.getRecords().stream()
+                .map(this::convertToManageVO)
+                .collect(Collectors.toList());
+
+        PageResult<FishingSpotManageVO> result = new PageResult<>();
+        result.setList(voList);
+        result.setTotal(entityPage.getTotal());
+        result.setPageNum(entityPage.getCurrent());
+        result.setPageSize(entityPage.getSize());
+        return result;
+    }
+
+    @Override
+    public FishingSpotManageVO getSpotManageById(Long id) {
+        FishingSpotEntity entity = this.getById(id);
+        if (entity == null || entity.getIsDeleted() == 1) {
+            throw new BusinessException("钓点不存在");
+        }
+        return convertToManageVO(entity);
+    }
+
+    @Override
+    public void createSpot(FishingSpotCreateDTO dto) {
+        FishingSpotEntity entity = new FishingSpotEntity();
+        BeanUtils.copyProperties(dto, entity);
+        
+        // 处理图片列表
+        if (dto.getImages() != null && !dto.getImages().isEmpty()) {
+            try {
+                entity.setImages(objectMapper.writeValueAsString(dto.getImages()));
+            } catch (Exception e) {
+                entity.setImages("");
+            }
+        }
+        
+        // 处理鱼种列表
+        if (dto.getFishInfoDictItemCodes() != null && !dto.getFishInfoDictItemCodes().isEmpty()) {
+            try {
+                entity.setFishInfoDictItemCodes(objectMapper.writeValueAsString(dto.getFishInfoDictItemCodes()));
+            } catch (Exception e) {
+                entity.setFishInfoDictItemCodes("");
+            }
+        }
+        
+        // 设置默认值
+        entity.setIsDeleted(0);
+        entity.setCreatorId(1L); // 默认管理员创建
+        
+        this.save(entity);
+    }
+
+    @Override
+    public void updateSpot(Long id, FishingSpotUpdateDTO dto) {
+        FishingSpotEntity entity = this.getById(id);
+        if (entity == null || entity.getIsDeleted() == 1) {
+            throw new BusinessException("钓点不存在");
+        }
+        
+        BeanUtils.copyProperties(dto, entity);
+        entity.setId(id);
+        
+        // 处理图片列表
+        if (dto.getImages() != null) {
+            try {
+                entity.setImages(objectMapper.writeValueAsString(dto.getImages()));
+            } catch (Exception e) {
+                entity.setImages("");
+            }
+        }
+        
+        // 处理鱼种列表
+        if (dto.getFishInfoDictItemCodes() != null) {
+            try {
+                entity.setFishInfoDictItemCodes(objectMapper.writeValueAsString(dto.getFishInfoDictItemCodes()));
+            } catch (Exception e) {
+                entity.setFishInfoDictItemCodes("");
+            }
+        }
+        
+        this.updateById(entity);
+    }
+
+    @Override
+    public void deleteSpot(Long id) {
+        FishingSpotEntity entity = this.getById(id);
+        if (entity == null || entity.getIsDeleted() == 1) {
+            throw new BusinessException("钓点不存在");
+        }
+        
+        entity.setIsDeleted(1);
+        this.updateById(entity);
+    }
+
+    private FishingSpotManageVO convertToManageVO(FishingSpotEntity entity) {
+        FishingSpotManageVO vo = new FishingSpotManageVO();
+        BeanUtils.copyProperties(entity, vo);
+        
+        // 设置类型名称
+        if (StringUtils.hasText(entity.getTypeDictItemCode())) {
+            vo.setTypeDictItemName(dictService.getItemName(entity.getTypeDictTypeCode(), entity.getTypeDictItemCode()));
+        }
+        
+        // 设置状态名称
+        if (StringUtils.hasText(entity.getStatusDictItemCode())) {
+            vo.setStatusDictItemName(dictService.getItemName(entity.getStatusDictTypeCode(), entity.getStatusDictItemCode()));
+        }
+        
+        // 解析图片列表
+        vo.setImages(parseImages(entity.getImages()));
+        
+        // 解析鱼种列表
+        vo.setFishInfoDictItemCodes(parseFishInfoCodes(entity.getFishInfoDictItemCodes()));
+        
+        // 获取创建者名称
+        if (entity.getCreatorId() != null) {
+            UserEntity user = userMapper.selectById(entity.getCreatorId());
+            if (user != null) {
+                vo.setCreatorName(user.getNickname());
+            }
+        }
+        
+        return vo;
+    }
+
+    /**
+     * 解析鱼种编码JSON字符串为列表
+     */
+    private List<String> parseFishInfoCodes(String fishInfoJson) {
+        if (fishInfoJson == null || fishInfoJson.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        try {
+            return objectMapper.readValue(fishInfoJson, new TypeReference<List<String>>() {});
+        } catch (Exception e) {
+            // 如果不是JSON格式，尝试按逗号分割
+            return Arrays.stream(fishInfoJson.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.toList());
+        }
     }
 }

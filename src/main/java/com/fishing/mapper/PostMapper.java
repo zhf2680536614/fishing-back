@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 import java.util.Map;
+import java.time.LocalDateTime;
 
 @Mapper
 public interface PostMapper extends BaseMapper<PostEntity> {
@@ -29,13 +30,6 @@ public interface PostMapper extends BaseMapper<PostEntity> {
     @Select("SELECT COUNT(*) FROM biz_post WHERE user_id = #{userId} AND type_dict_item_code = 'air_force' AND is_deleted = 0")
     Integer countAirForce(Long userId);
 
-    /**
-     * 查询每月出钓天数
-     * @param userId 用户ID
-     * @param startDate 开始日期
-     * @param endDate 结束日期
-     * @return 每月出钓天数列表
-     */
     @Select("SELECT DATE_FORMAT(create_time, '%Y-%m') as month, " +
             "COUNT(DISTINCT DATE(create_time)) as days " +
             "FROM biz_post " +
@@ -48,13 +42,6 @@ public interface PostMapper extends BaseMapper<PostEntity> {
                                                        @Param("startDate") String startDate,
                                                        @Param("endDate") String endDate);
 
-    /**
-     * 查询每日鱼获重量
-     * @param userId 用户ID
-     * @param startDate 开始日期
-     * @param endDate 结束日期
-     * @return 每日鱼获重量列表
-     */
     @Select("SELECT DATE_FORMAT(create_time, '%Y-%m-%d') as date, COALESCE(SUM(fish_weight), 0) as weight " +
             "FROM biz_post " +
             "WHERE user_id = #{userId} " +
@@ -67,13 +54,6 @@ public interface PostMapper extends BaseMapper<PostEntity> {
                                                     @Param("startDate") String startDate,
                                                     @Param("endDate") String endDate);
 
-    /**
-     * 查询每月空军统计数据
-     * @param userId 用户ID
-     * @param startDate 开始日期
-     * @param endDate 结束日期
-     * @return 每月空军统计数据列表
-     */
     @Select("SELECT DATE_FORMAT(create_time, '%Y-%m') as month, " +
             "COUNT(*) as total_trips, " +
             "SUM(CASE WHEN type_dict_item_code = 'air_force' THEN 1 ELSE 0 END) as air_force_count " +
@@ -86,5 +66,30 @@ public interface PostMapper extends BaseMapper<PostEntity> {
     List<Map<String, Object>> selectMonthlyAirForceStats(@Param("userId") Long userId,
                                                          @Param("startDate") String startDate,
                                                          @Param("endDate") String endDate);
-}
 
+    @Select("SELECT COUNT(*) FROM biz_post WHERE is_deleted = 0")
+    Long countTotalPosts();
+
+    @Select("SELECT COUNT(*) FROM biz_post WHERE is_deleted = 0 AND DATE(create_time) = CURDATE()")
+    Long countTodayNewPosts();
+
+    @Select("SELECT COUNT(*) FROM biz_post WHERE is_deleted = 0 AND status_dict_item_code = 'pending'")
+    Long countPendingPosts();
+
+    @Select("SELECT p.id, p.title, u.username, u.avatar, DATE_FORMAT(p.create_time, '%Y-%m-%d %H:%i') as createTime " +
+            "FROM biz_post p " +
+            "LEFT JOIN sys_user u ON p.user_id = u.id " +
+            "WHERE p.is_deleted = 0 ORDER BY p.create_time DESC LIMIT 5")
+    java.util.List<com.fishing.pojo.vo.DashboardStatsVO.LatestPost> getLatestPosts();
+
+    @Select("SELECT DATE(create_time) as date, COUNT(*) as value " +
+            "FROM biz_post WHERE is_deleted = 0 AND create_time >= #{startDate} " +
+            "GROUP BY DATE(create_time) ORDER BY date")
+    java.util.List<com.fishing.pojo.vo.DashboardStatsVO.TrendData> getPostTrend(LocalDateTime startDate);
+
+    @Select("SELECT di.item_name as typeName, COUNT(*) as count " +
+            "FROM biz_post p " +
+            "LEFT JOIN sys_dict_item di ON p.type_dict_item_code = di.item_code " +
+            "WHERE p.is_deleted = 0 GROUP BY p.type_dict_item_code, di.item_name")
+    java.util.List<com.fishing.pojo.vo.DashboardStatsVO.PostTypeDistribution> getPostTypeDistribution();
+}

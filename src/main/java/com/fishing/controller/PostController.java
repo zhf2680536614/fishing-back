@@ -1,7 +1,11 @@
 package com.fishing.controller;
 
+import com.fishing.pojo.PageResult;
 import com.fishing.pojo.Result;
 import com.fishing.pojo.dto.PostCreateDTO;
+import com.fishing.pojo.dto.PostUpdateDTO;
+import com.fishing.pojo.query.PostPageQuery;
+import com.fishing.pojo.vo.PostManageVO;
 import com.fishing.pojo.vo.PostVO;
 import com.fishing.service.PostService;
 import com.fishing.utils.JwtUtils;
@@ -93,5 +97,50 @@ public class PostController {
             }
         }
         return 1L;
+    }
+
+    // ==================== 管理后台接口 ====================
+
+    /**
+     * 分页查询帖子列表（管理后台）
+     */
+    @PostMapping("/page")
+    public Result<PageResult<PostManageVO>> page(@RequestBody PostPageQuery query) {
+        log.info("分页查询帖子列表：{}", query);
+        PageResult<PostManageVO> pageResult = postService.page(query);
+        return Result.success(pageResult);
+    }
+
+    /**
+     * 根据ID获取帖子管理详情
+     */
+    @GetMapping("/manage/{id}")
+    public Result<PostManageVO> getPostManageById(@PathVariable Long id) {
+        log.info("获取帖子管理详情：{}", id);
+        PostManageVO vo = postService.getPostManageById(id);
+        if (vo == null) {
+            return Result.error("帖子不存在");
+        }
+        return Result.success(vo);
+    }
+
+    /**
+     * 更新帖子
+     */
+    @PutMapping("/{id}")
+    public Result<Void> updatePost(@PathVariable Long id, @RequestBody PostUpdateDTO dto) {
+        log.info("更新帖子：{}", id);
+        postService.updatePost(id, dto);
+        return Result.success();
+    }
+
+    /**
+     * 删除帖子
+     */
+    @DeleteMapping("/{id}")
+    public Result<Void> deletePost(@PathVariable Long id) {
+        log.info("删除帖子：{}", id);
+        postService.deletePost(id);
+        return Result.success();
     }
 }

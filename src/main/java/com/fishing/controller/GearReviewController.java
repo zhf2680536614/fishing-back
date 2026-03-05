@@ -1,8 +1,11 @@
 package com.fishing.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fishing.pojo.PageResult;
 import com.fishing.pojo.dto.GearReviewDTO;
+import com.fishing.pojo.query.GearReviewPageQuery;
 import com.fishing.pojo.Result;
+import com.fishing.pojo.vo.GearReviewManageVO;
 import com.fishing.pojo.vo.GearReviewVO;
 import com.fishing.service.GearReviewService;
 import com.fishing.utils.JwtUtils;
@@ -69,5 +72,50 @@ public class GearReviewController {
             }
         }
         return 1L;
+    }
+
+    // ==================== 管理后台接口 ====================
+
+    /**
+     * 分页查询装备测评列表（管理后台）
+     */
+    @PostMapping("/manage/page")
+    public Result<PageResult<GearReviewManageVO>> managePage(@RequestBody GearReviewPageQuery query) {
+        log.info("分页查询装备测评列表（管理后台）：{}", query);
+        PageResult<GearReviewManageVO> pageResult = gearReviewService.page(query);
+        return Result.success(pageResult);
+    }
+
+    /**
+     * 根据ID获取装备测评管理详情
+     */
+    @GetMapping("/manage/{id}")
+    public Result<GearReviewManageVO> getGearReviewManageById(@PathVariable Long id) {
+        log.info("获取装备测评管理详情：{}", id);
+        GearReviewManageVO vo = gearReviewService.getGearReviewManageById(id);
+        if (vo == null) {
+            return Result.error("测评不存在");
+        }
+        return Result.success(vo);
+    }
+
+    /**
+     * 更新装备测评（管理后台）
+     */
+    @PutMapping("/manage/{id}")
+    public Result<Void> updateGearReview(@PathVariable Long id, @RequestBody GearReviewDTO dto) {
+        log.info("更新装备测评（管理后台）：{}", id);
+        gearReviewService.updateGearReview(id, dto);
+        return Result.success();
+    }
+
+    /**
+     * 删除装备测评（管理后台）
+     */
+    @DeleteMapping("/manage/{id}")
+    public Result<Void> deleteGearReview(@PathVariable Long id) {
+        log.info("删除装备测评（管理后台）：{}", id);
+        gearReviewService.deleteGearReview(id);
+        return Result.success();
     }
 }

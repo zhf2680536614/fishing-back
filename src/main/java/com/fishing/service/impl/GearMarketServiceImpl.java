@@ -2,6 +2,7 @@ package com.fishing.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fishing.exception.BusinessException;
 import com.fishing.mapper.GearMarketMapper;
@@ -9,12 +10,19 @@ import com.fishing.mapper.UserMapper;
 import com.fishing.pojo.dto.GearMarketDTO;
 import com.fishing.pojo.entity.GearMarketEntity;
 import com.fishing.pojo.entity.UserEntity;
+import com.fishing.pojo.PageResult;
+import com.fishing.pojo.query.GearMarketPageQuery;
+import com.fishing.pojo.vo.GearMarketManageVO;
 import com.fishing.pojo.vo.GearMarketVO;
+import com.fishing.service.DictService;
 import com.fishing.service.GearMarketService;
 import com.fishing.utils.MinioUtils;
 import com.google.gson.Gson;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,6 +33,7 @@ public class GearMarketServiceImpl implements GearMarketService {
     private final GearMarketMapper gearMarketMapper;
     private final UserMapper userMapper;
     private final MinioUtils minioUtils;
+    private final DictService dictService;
     private final Gson gson = new Gson();
 
     @Override
@@ -169,6 +178,158 @@ public class GearMarketServiceImpl implements GearMarketService {
         vo.setCategoryDictItemCode(entity.getCategoryDictItemCode());
         vo.setStatusDictItemCode(entity.getStatusDictItemCode());
         vo.setCreateTime(entity.getCreateTime());
+        return vo;
+    }
+
+    @Override
+    public PageResult<GearMarketManageVO> page(GearMarketPageQuery query) {
+        Page<GearMarketEntity> page = new Page<>(query.getPageNum(), query.getPageSize());
+        LambdaQueryWrapper<GearMarketEntity> wrapper = new LambdaQueryWrapper<>();
+
+        // 标题模糊查询
+        if (StringUtils.hasText(query.getTitle())) {
+            wrapper.like(GearMarketEntity::getTitle, query.getTitle());
+        }
+
+        // 分类筛选
+        if (StringUtils.hasText(query.getCategoryDictItemCode())) {
+            wrapper.eq(GearMarketEntity::getCategoryDictItemCode, query.getCategoryDictItemCode());
+        }
+
+        // 状态筛选
+        if (StringUtils.hasText(query.getStatusDictItemCode())) {
+            wrapper.eq(GearMarketEntity::getStatusDictItemCode, query.getStatusDictItemCode());
+        }
+
+        // 用户ID筛选
+        if (query.getUserId() != null) {
+            wrapper.eq(GearMarketEntity::getUserId, query.getUserId());
+        }
+
+        // 价格范围筛选
+        if (query.getMinPrice() != null) {
+            wrapper.ge(GearMarketEntity::getPrice, query.getMinPrice());
+        }
+        if (query.getMaxPrice() != null) {
+            wrapper.le(GearMarketEntity::getPrice, query.getMaxPrice());
+        }
+
+        wrapper.eq(GearMarketEntity::getIsDeleted, 0)
+                .orderByDesc(GearMarketEntity::getCreateTime);
+
+        IPage<GearMarketEntity> entityPage = gearMarketMapper.selectPage(page, wrapper);
+        List<GearMarketManageVO> voList = entityPage.getRecords().stream()
+                .map(this::convertToManageVO)
+                .collect(Collectors.toList());
+
+        PageResult<GearMarketManageVO> result = new PageResult<>();
+        result.setList(voList);
+        result.setTotal(entityPage.getTotal());
+        result.setPageNum(entityPage.getCurrent());
+        result.setPageSize(entityPage.getSize());
+        return result;
+    }
+
+    @Override
+    public GearMarketManageVO getGearMarketManageById(Long id) {
+        GearMarketEntity entity = gearMarketMapper.selectById(id);
+        if (entity == null || entity.getIsDeleted() == 1) {
+            return null;
+        }
+        return convertToManageVO(entity);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void saveGearMarket(GearMarketDTO dto) {
+        GearMarketEntity entity = new GearMarketEntity();
+        entity.setUserId(dto.getUserId() != null ? dto.getUserId() : 1L);
+        entity.setTitle(dto.getTitle());
+        entity.setDescription(dto.getDescription());
+        entity.setPrice(dto.getPrice());
+        entity.setOriginalPrice(dto.getOriginalPrice());
+        entity.setImages(gson.toJson(dto.getImages()));
+        entity.setCategoryDictTypeCode(dto.getCategoryDictTypeCode());
+        entity.setCategoryDictItemCode(dto.getCategoryDictItemCode());
+        entity.setStatusDictTypeCode(dto.getStatusDictTypeCode());
+        entity.setStatusDictItemCode(dto.getStatusDictItemCode());
+        entity.setIsDeleted(0);
+        gearMarketMapper.insert(entity);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateGearMarket(Long id, GearMarketDTO dto) {
+        GearMarketEntity entity = gearMarketMapper.selectById(id);
+        if (entity == null || entity.getIsDeleted() == 1) {
+            throw new BusinessException("装备不存在");
+        }
+        entity.setTitle(dto.getTitle());
+        entity.setDescription(dto.getDescription());
+        entity.setPrice(dto.getPrice());
+        entity.setOriginalPrice(dto.getOriginalPrice());
+        if (dto.getImages() != null) {
+            entity.setImages(gson.toJson(dto.getImages()));
+        }
+        entity.setCategoryDictTypeCode(dto.getCategoryDictTypeCode());
+        entity.setCategoryDictItemCode(dto.getCategoryDictItemCode());
+        entity.setStatusDictTypeCode(dto.getStatusDictTypeCode());
+        entity.setStatusDictItemCode(dto.getStatusDictItemCode());
+        gearMarketMapper.updateById(entity);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteGearMarket(Long id) {
+        GearMarketEntity entity = gearMarketMapper.selectById(id);
+        if (entity == null || entity.getIsDeleted() == 1) {
+            throw new BusinessException("装备不存在");
+        }
+
+        LambdaUpdateWrapper<GearMarketEntity> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(GearMarketEntity::getId, id);
+        updateWrapper.set(GearMarketEntity::getIsDeleted, 1);
+        gearMarketMapper.update(null, updateWrapper);
+    }
+
+    private GearMarketManageVO convertToManageVO(GearMarketEntity entity) {
+        GearMarketManageVO vo = new GearMarketManageVO();
+        BeanUtils.copyProperties(entity, vo);
+
+        // 获取用户信息
+        UserEntity user = userMapper.selectById(entity.getUserId());
+        if (user != null) {
+            vo.setUsername(user.getUsername());
+            vo.setNickname(user.getNickname());
+            vo.setAvatar(minioUtils.getFullUrl(user.getAvatar(), "user_avatar"));
+            vo.setPhone(user.getPhone());
+        }
+
+        // 解析图片
+        if (StringUtils.hasText(entity.getImages())) {
+            vo.setImages(gson.fromJson(entity.getImages(), List.class));
+        }
+
+        // 获取分类字典项名称
+        if (StringUtils.hasText(entity.getCategoryDictTypeCode()) &&
+                StringUtils.hasText(entity.getCategoryDictItemCode())) {
+            String itemName = dictService.getItemName(
+                    entity.getCategoryDictTypeCode(),
+                    entity.getCategoryDictItemCode()
+            );
+            vo.setCategoryDictItemName(itemName);
+        }
+
+        // 获取状态字典项名称
+        if (StringUtils.hasText(entity.getStatusDictTypeCode()) &&
+                StringUtils.hasText(entity.getStatusDictItemCode())) {
+            String itemName = dictService.getItemName(
+                    entity.getStatusDictTypeCode(),
+                    entity.getStatusDictItemCode()
+            );
+            vo.setStatusDictItemName(itemName);
+        }
+
         return vo;
     }
 }

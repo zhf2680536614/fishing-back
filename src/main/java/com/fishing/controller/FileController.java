@@ -67,4 +67,54 @@ public class FileController {
         }
         return Result.success(urls);
     }
+
+    /**
+     * 上传钓点图片
+     */
+    @PostMapping("/upload/spot")
+    public Result<String> uploadSpotImage(@RequestParam("file") MultipartFile file) {
+        log.info("上传钓点图片，文件名：{}，大小：{}", file.getOriginalFilename(), file.getSize());
+        try {
+            String url = minioUtils.uploadSpotImage(file);
+            log.info("上传成功，URL：{}", url);
+            return Result.success(url);
+        } catch (Exception e) {
+            log.error("上传失败", e);
+            return Result.error("上传失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 批量上传钓点图片
+     */
+    @PostMapping("/upload/spot/batch")
+    public Result<java.util.List<String>> uploadSpotImages(@RequestParam("files") MultipartFile[] files) {
+        log.info("批量上传钓点图片，数量：{}", files.length);
+        java.util.List<String> urls = new java.util.ArrayList<>();
+        for (MultipartFile file : files) {
+            try {
+                String url = minioUtils.uploadSpotImage(file);
+                urls.add(url);
+            } catch (Exception e) {
+                log.error("上传文件失败：{}，错误：{}", file.getOriginalFilename(), e.getMessage());
+            }
+        }
+        return Result.success(urls);
+    }
+
+    /**
+     * 上传装备图片
+     */
+    @PostMapping("/upload/gear")
+    public Result<String> uploadGearImage(@RequestParam("file") MultipartFile file) {
+        log.info("上传装备图片，文件名：{}，大小：{}", file.getOriginalFilename(), file.getSize());
+        try {
+            String url = minioUtils.uploadGearImage(file);
+            log.info("上传成功，URL：{}", url);
+            return Result.success(url);
+        } catch (Exception e) {
+            log.error("上传失败", e);
+            return Result.error("上传失败：" + e.getMessage());
+        }
+    }
 }
