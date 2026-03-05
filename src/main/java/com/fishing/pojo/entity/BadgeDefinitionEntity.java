@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Data
 @TableName("sys_badge_definition")
 public class BadgeDefinitionEntity {
-    @TableId(type = IdType.ASSIGN_ID)
+    @TableId(type = IdType.AUTO)
     private Long id;
     private String badgeName;
     private String badgeIcon;

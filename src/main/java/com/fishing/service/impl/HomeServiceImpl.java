@@ -43,7 +43,7 @@ public class HomeServiceImpl implements HomeService {
 
         // 查询今日战报帖子（type=0 表示战报帖子）
         LambdaQueryWrapper<PostEntity> fishingQuery = new LambdaQueryWrapper<PostEntity>()
-                .eq(PostEntity::getType, 0)
+                .eq(PostEntity::getTypeDictItemCode, "catch_report")
                 .eq(PostEntity::getIsDeleted, 0)
                 .between(PostEntity::getCreateTime, todayStart, todayEnd);
 
@@ -66,7 +66,7 @@ public class HomeServiceImpl implements HomeService {
 
         // 查询今日空军帖子（type=1 表示空军帖子）
         LambdaQueryWrapper<PostEntity> airForceQuery = new LambdaQueryWrapper<PostEntity>()
-                .eq(PostEntity::getType, 1)
+                .eq(PostEntity::getTypeDictItemCode, "air_force")
                 .eq(PostEntity::getIsDeleted, 0)
                 .between(PostEntity::getCreateTime, todayStart, todayEnd);
 
@@ -87,7 +87,7 @@ public class HomeServiceImpl implements HomeService {
 
         // 查询今日战报帖子，按鱼重量降序排列，取前3名
         LambdaQueryWrapper<PostEntity> query = new LambdaQueryWrapper<PostEntity>()
-                .eq(PostEntity::getType, 0)
+                .eq(PostEntity::getTypeDictItemCode, "catch_report")
                 .eq(PostEntity::getIsDeleted, 0)
                 .between(PostEntity::getCreateTime, todayStart, todayEnd)
                 .orderByDesc(PostEntity::getFishWeight)
@@ -102,7 +102,7 @@ public class HomeServiceImpl implements HomeService {
         HotPostVO vo = new HotPostVO();
         vo.setId(entity.getId());
         vo.setTitle(entity.getTitle());
-        vo.setFishSpecies(entity.getFishSpecies());
+        vo.setFishSpecies(entity.getFishSpeciesDictItemCode());
         vo.setFishWeight(entity.getFishWeight());
         vo.setCreateTime(entity.getCreateTime());
 

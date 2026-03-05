@@ -14,12 +14,14 @@ import java.util.List;
 @Data
 @TableName("biz_post")
 public class PostEntity implements Serializable {
-    @TableId(type = IdType.ASSIGN_ID)
+    @TableId(type = IdType.AUTO)
     private Long id;
 
     private Long userId;
 
-    private Integer type;
+    private String typeDictTypeCode;
+
+    private String typeDictItemCode;
 
     private String title;
 
@@ -27,7 +29,9 @@ public class PostEntity implements Serializable {
 
     private String images;
 
-    private String fishSpecies;
+    private String fishSpeciesDictTypeCode;
+
+    private String fishSpeciesDictItemCode;
 
     private BigDecimal fishWeight;
 
@@ -41,9 +45,15 @@ public class PostEntity implements Serializable {
 
     private Integer commentCount;
 
-    private Integer aiAuditStatus;
+    private String aiAuditStatusDictTypeCode;
+
+    private String aiAuditStatusDictItemCode;
 
     private String aiAuditReason;
+
+    private String statusDictTypeCode;
+
+    private String statusDictItemCode;
 
     private String aiComment;
 

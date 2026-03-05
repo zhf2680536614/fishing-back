@@ -13,20 +13,20 @@ public interface PostMapper extends BaseMapper<PostEntity> {
     @Select("SELECT p.*, u.nickname as user_nickname, u.avatar as user_avatar " +
             "FROM biz_post p " +
             "LEFT JOIN sys_user u ON p.user_id = u.id " +
-            "WHERE p.type = #{type} AND p.is_deleted = 0 " +
+            "WHERE p.type_dict_item_code = #{typeDictItemCode} AND p.is_deleted = 0 " +
             "ORDER BY p.create_time DESC")
-    List<PostEntity> selectListWithUser(Integer type);
+    List<PostEntity> selectListWithUser(String typeDictItemCode);
 
     @Select("SELECT COUNT(*) FROM biz_post WHERE user_id = #{userId} AND is_deleted = 0")
     Integer countFishingDays(Long userId);
 
-    @Select("SELECT COUNT(*) FROM biz_post WHERE user_id = #{userId} AND type = 0 AND is_deleted = 0")
+    @Select("SELECT COUNT(*) FROM biz_post WHERE user_id = #{userId} AND type_dict_item_code = 'catch_report' AND is_deleted = 0")
     Integer countFishDays(Long userId);
 
-    @Select("SELECT COALESCE(SUM(fish_weight), 0) FROM biz_post WHERE user_id = #{userId} AND type = 0 AND is_deleted = 0")
+    @Select("SELECT COALESCE(SUM(fish_weight), 0) FROM biz_post WHERE user_id = #{userId} AND type_dict_item_code = 'catch_report' AND is_deleted = 0")
     Double sumFishWeight(Long userId);
 
-    @Select("SELECT COUNT(*) FROM biz_post WHERE user_id = #{userId} AND type = 1 AND is_deleted = 0")
+    @Select("SELECT COUNT(*) FROM biz_post WHERE user_id = #{userId} AND type_dict_item_code = 'air_force' AND is_deleted = 0")
     Integer countAirForce(Long userId);
 
     /**
@@ -59,7 +59,7 @@ public interface PostMapper extends BaseMapper<PostEntity> {
             "FROM biz_post " +
             "WHERE user_id = #{userId} " +
             "AND is_deleted = 0 " +
-            "AND type = 0 " +
+            "AND type_dict_item_code = 'catch_report' " +
             "AND DATE(create_time) BETWEEN #{startDate} AND #{endDate} " +
             "GROUP BY DATE_FORMAT(create_time, '%Y-%m-%d') " +
             "ORDER BY date")
@@ -76,7 +76,7 @@ public interface PostMapper extends BaseMapper<PostEntity> {
      */
     @Select("SELECT DATE_FORMAT(create_time, '%Y-%m') as month, " +
             "COUNT(*) as total_trips, " +
-            "SUM(CASE WHEN type = 1 THEN 1 ELSE 0 END) as air_force_count " +
+            "SUM(CASE WHEN type_dict_item_code = 'air_force' THEN 1 ELSE 0 END) as air_force_count " +
             "FROM biz_post " +
             "WHERE user_id = #{userId} " +
             "AND is_deleted = 0 " +

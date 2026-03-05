@@ -5,7 +5,7 @@ import com.fishing.pojo.dto.GearReviewDTO;
 import com.fishing.pojo.vo.GearReviewVO;
 
 public interface GearReviewService {
-    Page<GearReviewVO> page(int pageNum, int pageSize, String category, String keyword);
+    Page<GearReviewVO> page(int pageNum, int pageSize, String categoryDictItemCode, String statusDictItemCode, String keyword);
     GearReviewVO getById(Long id);
     void save(GearReviewDTO dto, Long userId);
     void update(Long id, GearReviewDTO dto, Long userId);

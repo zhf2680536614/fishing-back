@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Data
 @TableName("sys_user")
 public class UserEntity implements Serializable {
-    @TableId(type = IdType.ASSIGN_ID)
+    @TableId(type = IdType.AUTO)
     private Long id;
 
     private String username;
@@ -24,13 +24,17 @@ public class UserEntity implements Serializable {
 
     private String signature;
 
-    private Integer role;
+    private String roleDictTypeCode;
+
+    private String roleDictItemCode;
 
     private Integer isMaster;
 
     private Integer expPoints;
 
-    private Integer status;
+    private String statusDictTypeCode;
+
+    private String statusDictItemCode;
 
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;

@@ -12,5 +12,8 @@ public class GearMarketDTO {
     private BigDecimal price;
     private BigDecimal originalPrice;
     private List<String> images;
-    private String category;
+    private String categoryDictTypeCode;
+    private String categoryDictItemCode;
+    private String statusDictTypeCode;
+    private String statusDictItemCode;
 }

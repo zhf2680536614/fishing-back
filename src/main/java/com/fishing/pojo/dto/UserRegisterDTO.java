@@ -10,4 +10,8 @@ public class UserRegisterDTO implements Serializable {
     private String password;
     private String nickname;
     private String phone;
+    private String roleDictTypeCode;
+    private String roleDictItemCode;
+    private String statusDictTypeCode;
+    private String statusDictItemCode;
 }

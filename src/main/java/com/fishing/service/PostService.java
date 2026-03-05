@@ -17,7 +17,7 @@ public interface PostService extends IService<PostEntity> {
     /**
      * 获取帖子列表
      */
-    List<PostVO> getPostList(Integer type, Integer pageNum, Integer pageSize);
+    List<PostVO> getPostList(String typeDictItemCode, Integer pageNum, Integer pageSize);
 
     /**
      * 获取帖子详情

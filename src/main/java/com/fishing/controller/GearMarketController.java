@@ -24,10 +24,11 @@ public class GearMarketController {
     public Result<Page<GearMarketVO>> page(
             @RequestParam(defaultValue = "1") int pageNum,
             @RequestParam(defaultValue = "10") int pageSize,
-            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String categoryDictItemCode,
+            @RequestParam(required = false) String statusDictItemCode,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false, defaultValue = "newest") String sortBy) {
-        Page<GearMarketVO> page = gearMarketService.page(pageNum, pageSize, category, keyword, sortBy);
+        Page<GearMarketVO> page = gearMarketService.page(pageNum, pageSize, categoryDictItemCode, statusDictItemCode, keyword, sortBy);
         return Result.success(page);
     }
 
@@ -60,9 +61,9 @@ public class GearMarketController {
     }
 
     @PutMapping("/{id}/status")
-    public Result<Void> updateStatus(@PathVariable Long id, @RequestParam Integer status, HttpServletRequest request) {
+    public Result<Void> updateStatus(@PathVariable Long id, @RequestParam String statusDictItemCode, HttpServletRequest request) {
         Long userId = getCurrentUserId(request);
-        gearMarketService.updateStatus(id, status, userId);
+        gearMarketService.updateStatus(id, statusDictItemCode, userId);
         return Result.success();
     }
 

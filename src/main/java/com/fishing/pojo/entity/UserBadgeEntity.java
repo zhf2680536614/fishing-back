@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 @Data
 @TableName("sys_user_badge")
 public class UserBadgeEntity {
-    @TableId(type = IdType.ASSIGN_ID)
+    @TableId(type = IdType.AUTO)
     private Long id;
     private Long userId;
     private Long badgeId;

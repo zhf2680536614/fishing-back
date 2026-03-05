@@ -32,8 +32,8 @@ public class FishingStatsServiceImpl implements FishingStatsService {
     private static final DateTimeFormatter FULL_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     @Override
-    public FishingStatsVO getFishingStats(Long userId) {
-        log.info("开始获取用户钓鱼统计数据：userId={}", userId);
+    public FishingStatsVO getFishingStats(Long userId, String catchTypeCode, String airForceTypeCode) {
+        log.info("开始获取用户钓鱼统计数据：userId={}, catchTypeCode={}, airForceTypeCode={}", userId, catchTypeCode, airForceTypeCode);
 
         FishingStatsVO statsVO = new FishingStatsVO();
 
@@ -41,10 +41,10 @@ public class FishingStatsServiceImpl implements FishingStatsService {
         statsVO.setMonthlyFishingRates(getMonthlyFishingRates(userId));
 
         // 获取每日鱼获重量趋势（最近15天）
-        statsVO.setDailyFishWeights(getDailyFishWeights(userId));
+        statsVO.setDailyFishWeights(getDailyFishWeights(userId, catchTypeCode));
 
         // 获取每月空军率（最近12个月）
-        statsVO.setMonthlyAirForceRates(getMonthlyAirForceRates(userId));
+        statsVO.setMonthlyAirForceRates(getMonthlyAirForceRates(userId, airForceTypeCode));
 
         log.info("获取用户钓鱼统计数据完成：userId={}", userId);
         return statsVO;
@@ -97,7 +97,7 @@ public class FishingStatsServiceImpl implements FishingStatsService {
     /**
      * 获取每日鱼获重量趋势（最近15天）
      */
-    private List<FishingStatsVO.DailyFishWeightVO> getDailyFishWeights(Long userId) {
+    private List<FishingStatsVO.DailyFishWeightVO> getDailyFishWeights(Long userId, String catchTypeCode) {
         List<FishingStatsVO.DailyFishWeightVO> result = new ArrayList<>();
 
         // 获取最近15天的鱼获重量
@@ -138,7 +138,7 @@ public class FishingStatsServiceImpl implements FishingStatsService {
     /**
      * 获取每月空军率（最近12个月）
      */
-    private List<FishingStatsVO.MonthlyAirForceRateVO> getMonthlyAirForceRates(Long userId) {
+    private List<FishingStatsVO.MonthlyAirForceRateVO> getMonthlyAirForceRates(Long userId, String airForceTypeCode) {
         List<FishingStatsVO.MonthlyAirForceRateVO> result = new ArrayList<>();
 
         // 获取最近12个月的出钓和空军数据

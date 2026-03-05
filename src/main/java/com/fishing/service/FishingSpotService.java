@@ -12,12 +12,12 @@ public interface FishingSpotService {
     /**
      * 获取推荐钓点（随机指定数量，支持类型筛选）
      */
-    List<FishingSpotVO> getRecommendSpots(int limit, Integer type);
+    List<FishingSpotVO> getRecommendSpots(int limit, String typeDictItemCode);
 
     /**
      * 搜索钓点（支持关键词和类型筛选）
      */
-    List<FishingSpotVO> searchSpots(String keyword, Integer type);
+    List<FishingSpotVO> searchSpots(String keyword, String typeDictItemCode);
 
     /**
      * 根据ID获取钓点详情

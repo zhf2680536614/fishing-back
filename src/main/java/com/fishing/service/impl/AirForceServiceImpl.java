@@ -60,7 +60,8 @@ public class AirForceServiceImpl extends ServiceImpl<PostMapper, PostEntity> imp
         // 创建帖子
         PostEntity post = new PostEntity();
         post.setUserId(userId);
-        post.setType(1); // 1-空军吐槽
+        post.setTypeDictTypeCode(dto.getTypeDictTypeCode());
+        post.setTypeDictItemCode(dto.getTypeDictItemCode());
         post.setTitle("空军打卡");
         post.setContent(dto.getContent());
         post.setImageList(dto.getImages());
@@ -68,6 +69,10 @@ public class AirForceServiceImpl extends ServiceImpl<PostMapper, PostEntity> imp
         post.setLikeCount(0);
         post.setCommentCount(0);
         post.setViewCount(0);
+        post.setAiAuditStatusDictTypeCode(dto.getAiAuditStatusDictTypeCode());
+        post.setAiAuditStatusDictItemCode(dto.getAiAuditStatusDictItemCode());
+        post.setStatusDictTypeCode(dto.getStatusDictTypeCode());
+        post.setStatusDictItemCode(dto.getStatusDictItemCode());
         post.setCreateTime(LocalDateTime.now());
         post.setUpdateTime(LocalDateTime.now());
         post.setIsDeleted(0);
@@ -79,9 +84,9 @@ public class AirForceServiceImpl extends ServiceImpl<PostMapper, PostEntity> imp
     }
 
     @Override
-    public List<AirForcePostVO> getPostList(Integer pageNum, Integer pageSize, String sortType, Long userId) {
+    public List<AirForcePostVO> getPostList(Integer pageNum, Integer pageSize, String sortType, String typeDictItemCode, Long userId) {
         LambdaQueryWrapper<PostEntity> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(PostEntity::getType, 1) // 空军吐槽
+        wrapper.eq(PostEntity::getTypeDictItemCode, typeDictItemCode) // 帖子类型
                 .eq(PostEntity::getIsDeleted, 0);
 
         // 排序
@@ -104,14 +109,14 @@ public class AirForceServiceImpl extends ServiceImpl<PostMapper, PostEntity> imp
     }
 
     @Override
-    public AirForceStatsVO getStats(Long userId) {
+    public AirForceStatsVO getStats(Long userId, String airForceTypeCode, String catchTypeCode) {
         AirForceStatsVO stats = new AirForceStatsVO();
 
         // 今日空军人数
         LocalDate today = LocalDate.now();
         LocalDateTime todayStart = today.atStartOfDay();
         LambdaQueryWrapper<PostEntity> todayWrapper = new LambdaQueryWrapper<>();
-        todayWrapper.eq(PostEntity::getType, 1)
+        todayWrapper.eq(PostEntity::getTypeDictItemCode, airForceTypeCode)
                 .ge(PostEntity::getCreateTime, todayStart)
                 .eq(PostEntity::getIsDeleted, 0);
         long todayCount = this.count(todayWrapper);
@@ -121,7 +126,7 @@ public class AirForceServiceImpl extends ServiceImpl<PostMapper, PostEntity> imp
         LocalDate weekStart = today.minusDays(7);
         LocalDateTime weekStartTime = weekStart.atStartOfDay();
         LambdaQueryWrapper<PostEntity> weekWrapper = new LambdaQueryWrapper<>();
-        weekWrapper.eq(PostEntity::getType, 1)
+        weekWrapper.eq(PostEntity::getTypeDictItemCode, airForceTypeCode)
                 .ge(PostEntity::getCreateTime, weekStartTime)
                 .eq(PostEntity::getIsDeleted, 0);
         long weekCount = this.count(weekWrapper);
@@ -129,12 +134,12 @@ public class AirForceServiceImpl extends ServiceImpl<PostMapper, PostEntity> imp
 
         // 空军率 = 空军帖子数 / (空军帖子数 + 鱼获战报帖子数) * 100
         LambdaQueryWrapper<PostEntity> airForceWrapper = new LambdaQueryWrapper<>();
-        airForceWrapper.eq(PostEntity::getType, 1)
+        airForceWrapper.eq(PostEntity::getTypeDictItemCode, airForceTypeCode)
                 .eq(PostEntity::getIsDeleted, 0);
         long airForceTotal = this.count(airForceWrapper);
 
         LambdaQueryWrapper<PostEntity> catchWrapper = new LambdaQueryWrapper<>();
-        catchWrapper.eq(PostEntity::getType, 0)
+        catchWrapper.eq(PostEntity::getTypeDictItemCode, catchTypeCode)
                 .eq(PostEntity::getIsDeleted, 0);
         long catchTotal = this.count(catchWrapper);
 
@@ -147,14 +152,14 @@ public class AirForceServiceImpl extends ServiceImpl<PostMapper, PostEntity> imp
 
         // 我的空军次数
         LambdaQueryWrapper<PostEntity> myWrapper = new LambdaQueryWrapper<>();
-        myWrapper.eq(PostEntity::getType, 1)
+        myWrapper.eq(PostEntity::getTypeDictItemCode, airForceTypeCode)
                 .eq(PostEntity::getUserId, userId)
                 .eq(PostEntity::getIsDeleted, 0);
         long myCount = this.count(myWrapper);
         stats.setMyAirForceCount((int) myCount);
 
         // 我的连续空军天数（模拟数据）
-        stats.setMyStreak(calculateStreak(userId));
+        stats.setMyStreak(calculateStreak(userId, airForceTypeCode));
 
         return stats;
     }
@@ -193,9 +198,9 @@ public class AirForceServiceImpl extends ServiceImpl<PostMapper, PostEntity> imp
     /**
      * 计算连续空军天数
      */
-    private Integer calculateStreak(Long userId) {
+    private Integer calculateStreak(Long userId, String airForceTypeCode) {
         LambdaQueryWrapper<PostEntity> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(PostEntity::getType, 1)
+        wrapper.eq(PostEntity::getTypeDictItemCode, airForceTypeCode)
                 .eq(PostEntity::getUserId, userId)
                 .eq(PostEntity::getIsDeleted, 0)
                 .orderByDesc(PostEntity::getCreateTime);

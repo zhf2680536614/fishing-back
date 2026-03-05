@@ -17,7 +17,8 @@ public class GearReviewVO {
     private String content;
     private BigDecimal rating;
     private String gearName;
-    private String category;
+    private String categoryDictItemCode;
+    private String statusDictItemCode;
     private java.util.List<String> images;
     private Map<String, Object> aiAnalysis;
     private LocalDateTime createTime;

@@ -48,16 +48,21 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, PostEntity> impleme
 
         PostEntity entity = new PostEntity();
         entity.setUserId(userId);
-        entity.setType(0); // 0-鱼获战报
+        entity.setTypeDictTypeCode(dto.getTypeDictTypeCode());
+        entity.setTypeDictItemCode(dto.getTypeDictItemCode());
         entity.setTitle(dto.getTitle());
         entity.setContent(dto.getContent());
-        entity.setFishSpecies(dto.getFishSpecies());
+        entity.setFishSpeciesDictTypeCode(dto.getFishSpeciesDictTypeCode());
+        entity.setFishSpeciesDictItemCode(dto.getFishSpeciesDictItemCode());
         entity.setFishWeight(dto.getFishWeight() != null ? dto.getFishWeight() : BigDecimal.ZERO);
         entity.setAddressName(dto.getAddress());
         entity.setViewCount(0);
         entity.setLikeCount(0);
         entity.setCommentCount(0);
-        entity.setAiAuditStatus(1); // 1-正常
+        entity.setAiAuditStatusDictTypeCode(dto.getAiAuditStatusDictTypeCode());
+        entity.setAiAuditStatusDictItemCode(dto.getAiAuditStatusDictItemCode());
+        entity.setStatusDictTypeCode(dto.getStatusDictTypeCode());
+        entity.setStatusDictItemCode(dto.getStatusDictItemCode());
         entity.setIsDeleted(0); // 0-未删除
 
         // 处理图片列表，转为JSON字符串
@@ -91,15 +96,21 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, PostEntity> impleme
     }
 
     @Override
-    public List<PostVO> getPostList(Integer type, Integer pageNum, Integer pageSize) {
+    public List<PostVO> getPostList(String typeDictItemCode, Integer pageNum, Integer pageSize) {
         // 使用 MyBatis-Plus 分页
         Page<PostEntity> page = new Page<>(pageNum, pageSize);
-        IPage<PostEntity> resultPage = postMapper.selectPage(page,
-                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<PostEntity>()
-                        .eq(PostEntity::getType, type)
-                        .eq(PostEntity::getIsDeleted, 0)
-                        .orderByDesc(PostEntity::getCreateTime)
-        );
+        
+        LambdaQueryWrapper<PostEntity> queryWrapper = new LambdaQueryWrapper<>();
+        
+        // 根据类型参数设置查询条件
+        if (typeDictItemCode != null && !typeDictItemCode.isEmpty()) {
+            queryWrapper.eq(PostEntity::getTypeDictItemCode, typeDictItemCode);
+        }
+        
+        queryWrapper.eq(PostEntity::getIsDeleted, 0)
+                .orderByDesc(PostEntity::getCreateTime);
+        
+        IPage<PostEntity> resultPage = postMapper.selectPage(page, queryWrapper);
 
         return resultPage.getRecords().stream().map(this::convertToVO).collect(Collectors.toList());
     }

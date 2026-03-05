@@ -56,7 +56,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
             throw new BusinessException("密码错误");
         }
 
-        if (user.getStatus() == 0) {
+        if ("banned".equals(user.getStatusDictItemCode())) {
             throw new BusinessException("账号已被封禁");
         }
 
@@ -87,10 +87,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
         user.setPassword(DigestUtils.md5DigestAsHex(password.getBytes(StandardCharsets.UTF_8)));
         user.setNickname(nickname != null ? nickname : username);
         user.setPhone(phone);
-        user.setRole(0);
+        user.setRoleDictTypeCode(registerDTO.getRoleDictTypeCode() != null ? registerDTO.getRoleDictTypeCode() : "user_role");
+        user.setRoleDictItemCode(registerDTO.getRoleDictItemCode() != null ? registerDTO.getRoleDictItemCode() : "user");
         user.setIsMaster(0);
         user.setExpPoints(0);
-        user.setStatus(1);
+        user.setStatusDictTypeCode(registerDTO.getStatusDictTypeCode() != null ? registerDTO.getStatusDictTypeCode() : "user_status");
+        user.setStatusDictItemCode(registerDTO.getStatusDictItemCode() != null ? registerDTO.getStatusDictItemCode() : "normal");
 
         this.save(user);
 

@@ -31,11 +31,14 @@ public class GearReviewServiceImpl implements GearReviewService {
     private final Gson gson = new Gson();
 
     @Override
-    public Page<GearReviewVO> page(int pageNum, int pageSize, String category, String keyword) {
+    public Page<GearReviewVO> page(int pageNum, int pageSize, String categoryDictItemCode, String statusDictItemCode, String keyword) {
         LambdaQueryWrapper<GearReviewEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(GearReviewEntity::getIsDeleted, 0);
-        if (category != null && !category.equals("all")) {
-            queryWrapper.eq(GearReviewEntity::getCategory, category);
+        if (statusDictItemCode != null && !statusDictItemCode.isEmpty()) {
+            queryWrapper.eq(GearReviewEntity::getStatusDictItemCode, statusDictItemCode);
+        }
+        if (categoryDictItemCode != null && !categoryDictItemCode.equals("all")) {
+            queryWrapper.eq(GearReviewEntity::getCategoryDictItemCode, categoryDictItemCode);
         }
         if (keyword != null && !keyword.isEmpty()) {
             queryWrapper.like(GearReviewEntity::getTitle, keyword).or()
@@ -70,7 +73,10 @@ public class GearReviewServiceImpl implements GearReviewService {
         entity.setContent(dto.getContent());
         entity.setRating(dto.getRating());
         entity.setGearName(dto.getGearName());
-        entity.setCategory(dto.getCategory());
+        entity.setCategoryDictTypeCode(dto.getCategoryDictTypeCode());
+        entity.setCategoryDictItemCode(dto.getCategoryDictItemCode());
+        entity.setStatusDictTypeCode(dto.getStatusDictTypeCode());
+        entity.setStatusDictItemCode(dto.getStatusDictItemCode());
         entity.setImages(gson.toJson(dto.getImages()));
         entity.setAiAnalysis(generateAiAnalysis(dto.getContent()));
         entity.setIsDeleted(0);
@@ -90,7 +96,10 @@ public class GearReviewServiceImpl implements GearReviewService {
         entity.setContent(dto.getContent());
         entity.setRating(dto.getRating());
         entity.setGearName(dto.getGearName());
-        entity.setCategory(dto.getCategory());
+        entity.setCategoryDictTypeCode(dto.getCategoryDictTypeCode());
+        entity.setCategoryDictItemCode(dto.getCategoryDictItemCode());
+        entity.setStatusDictTypeCode(dto.getStatusDictTypeCode());
+        entity.setStatusDictItemCode(dto.getStatusDictItemCode());
         entity.setImages(gson.toJson(dto.getImages()));
         entity.setAiAnalysis(generateAiAnalysis(dto.getContent()));
         gearReviewMapper.updateById(entity);
@@ -125,7 +134,8 @@ public class GearReviewServiceImpl implements GearReviewService {
         vo.setContent(entity.getContent());
         vo.setRating(entity.getRating());
         vo.setGearName(entity.getGearName());
-        vo.setCategory(entity.getCategory());
+        vo.setCategoryDictItemCode(entity.getCategoryDictItemCode());
+        vo.setStatusDictItemCode(entity.getStatusDictItemCode());
         if (entity.getImages() != null) {
             vo.setImages(gson.fromJson(entity.getImages(), new TypeToken<List<String>>(){}.getType()));
         }

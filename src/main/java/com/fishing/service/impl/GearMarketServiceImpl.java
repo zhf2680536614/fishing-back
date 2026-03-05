@@ -28,12 +28,14 @@ public class GearMarketServiceImpl implements GearMarketService {
     private final Gson gson = new Gson();
 
     @Override
-    public Page<GearMarketVO> page(int pageNum, int pageSize, String category, String keyword, String sortBy) {
+    public Page<GearMarketVO> page(int pageNum, int pageSize, String categoryDictItemCode, String statusDictItemCode, String keyword, String sortBy) {
         LambdaQueryWrapper<GearMarketEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(GearMarketEntity::getIsDeleted, 0);
-        queryWrapper.eq(GearMarketEntity::getStatus, 0);
-        if (category != null && !category.equals("all")) {
-            queryWrapper.eq(GearMarketEntity::getCategory, category);
+        if (statusDictItemCode != null && !statusDictItemCode.isEmpty()) {
+            queryWrapper.eq(GearMarketEntity::getStatusDictItemCode, statusDictItemCode);
+        }
+        if (categoryDictItemCode != null && !categoryDictItemCode.equals("all")) {
+            queryWrapper.eq(GearMarketEntity::getCategoryDictItemCode, categoryDictItemCode);
         }
         if (keyword != null && !keyword.isEmpty()) {
             queryWrapper.like(GearMarketEntity::getTitle, keyword)
@@ -76,8 +78,10 @@ public class GearMarketServiceImpl implements GearMarketService {
         entity.setPrice(dto.getPrice());
         entity.setOriginalPrice(dto.getOriginalPrice());
         entity.setImages(gson.toJson(dto.getImages()));
-        entity.setCategory(dto.getCategory());
-        entity.setStatus(0);
+        entity.setCategoryDictTypeCode(dto.getCategoryDictTypeCode());
+        entity.setCategoryDictItemCode(dto.getCategoryDictItemCode());
+        entity.setStatusDictTypeCode(dto.getStatusDictTypeCode());
+        entity.setStatusDictItemCode(dto.getStatusDictItemCode());
         entity.setIsDeleted(0);
         gearMarketMapper.insert(entity);
     }
@@ -96,7 +100,10 @@ public class GearMarketServiceImpl implements GearMarketService {
         entity.setPrice(dto.getPrice());
         entity.setOriginalPrice(dto.getOriginalPrice());
         entity.setImages(gson.toJson(dto.getImages()));
-        entity.setCategory(dto.getCategory());
+        entity.setCategoryDictTypeCode(dto.getCategoryDictTypeCode());
+        entity.setCategoryDictItemCode(dto.getCategoryDictItemCode());
+        entity.setStatusDictTypeCode(dto.getStatusDictTypeCode());
+        entity.setStatusDictItemCode(dto.getStatusDictItemCode());
         gearMarketMapper.updateById(entity);
     }
 
@@ -118,7 +125,7 @@ public class GearMarketServiceImpl implements GearMarketService {
     }
 
     @Override
-    public void updateStatus(Long id, Integer status, Long userId) {
+    public void updateStatus(Long id, String statusDictItemCode, Long userId) {
         GearMarketEntity entity = gearMarketMapper.selectById(id);
         if (entity == null || entity.getIsDeleted() == 1) {
             throw new BusinessException("装备不存在");
@@ -126,7 +133,7 @@ public class GearMarketServiceImpl implements GearMarketService {
         if (!entity.getUserId().equals(userId)) {
             throw new BusinessException("无权修改");
         }
-        entity.setStatus(status);
+        entity.setStatusDictItemCode(statusDictItemCode);
         gearMarketMapper.updateById(entity);
     }
 
@@ -159,8 +166,8 @@ public class GearMarketServiceImpl implements GearMarketService {
         vo.setPrice(entity.getPrice());
         vo.setOriginalPrice(entity.getOriginalPrice());
         vo.setImages(gson.fromJson(entity.getImages(), List.class));
-        vo.setCategory(entity.getCategory());
-        vo.setStatus(entity.getStatus());
+        vo.setCategoryDictItemCode(entity.getCategoryDictItemCode());
+        vo.setStatusDictItemCode(entity.getStatusDictItemCode());
         vo.setCreateTime(entity.getCreateTime());
         return vo;
     }

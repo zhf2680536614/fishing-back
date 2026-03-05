@@ -24,6 +24,10 @@ public class UserAddressVO {
     
     // 完整地址（用于显示）
     public String getFullAddress() {
+        if (province == null) province = "";
+        if (city == null) city = "";
+        if (district == null) district = "";
+        if (detailAddress == null) detailAddress = "";
         return province + city + district + detailAddress;
     }
 }

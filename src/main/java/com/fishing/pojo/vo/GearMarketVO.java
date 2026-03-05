@@ -23,7 +23,7 @@ public class GearMarketVO {
     private BigDecimal price;
     private BigDecimal originalPrice;
     private List<String> images;
-    private String category;
-    private Integer status;
+    private String categoryDictItemCode;
+    private String statusDictItemCode;
     private LocalDateTime createTime;
 }

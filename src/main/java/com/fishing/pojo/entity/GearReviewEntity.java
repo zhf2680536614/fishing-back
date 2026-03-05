@@ -11,14 +11,17 @@ import java.time.LocalDateTime;
 @Data
 @TableName("biz_gear_review")
 public class GearReviewEntity {
-    @TableId(type = IdType.ASSIGN_ID)
+    @TableId(type = IdType.AUTO)
     private Long id;
     private Long userId;
     private String title;
     private String content;
     private BigDecimal rating;
     private String gearName;
-    private String category;
+    private String categoryDictTypeCode;
+    private String categoryDictItemCode;
+    private String statusDictTypeCode;
+    private String statusDictItemCode;
     private String images;
     private String aiAnalysis;
     private LocalDateTime createTime;

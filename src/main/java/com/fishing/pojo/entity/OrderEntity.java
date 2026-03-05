@@ -11,14 +11,15 @@ import java.util.Date;
 @Data
 @TableName("biz_order")
 public class OrderEntity {
-    @TableId(type = IdType.ASSIGN_ID)
+    @TableId(type = IdType.AUTO)
     private Long id;
     private Long userId;
     private Long gearId;
     private String gearTitle;
     private BigDecimal gearPrice;
     private BigDecimal totalAmount;
-    private Integer status;
+    private String statusDictTypeCode;
+    private String statusDictItemCode;
     private String address;
     private String contactPhone;
     private Date createTime;

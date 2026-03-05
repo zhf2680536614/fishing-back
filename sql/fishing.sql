@@ -1,7 +1,7 @@
 SET FOREIGN_KEY_CHECKS = 0;
 SET NAMES utf8mb4;
 -- fish_club_db DDL
-CREATE DATABASE `fish_club_db`
+CREATE DATABASE IF NOT EXISTS `fish_club_db`
 CHARACTER SET utf8mb4
 COLLATE utf8mb4_0900_ai_ci;;
 use `fish_club_db`;
@@ -30,7 +30,8 @@ CREATE TABLE `fish_club_db`.`biz_comment` (
   `user_id` BIGINT NOT NULL COMMENT "评论者ID (如果是AI, 则为系统ID)",
   `parent_id` BIGINT NULL DEFAULT 0 COMMENT "父评论ID",
   `content` VARCHAR(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT "评论内容",
-  `is_ai_generated` TINYINT NULL DEFAULT 0 COMMENT "是否AI生成的回复: 0-否, 1-是",
+  `is_ai_generated_dict_type_code` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "是否AI生成的回复字典类型编码",
+  `is_ai_generated_dict_item_code` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "是否AI生成的回复字典项编码",
   `create_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP COMMENT "创建时间",
   `update_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0) COMMENT "更新时间",
   `is_deleted` TINYINT NULL DEFAULT 0 COMMENT "是否删除: 0-未删, 1-已删",
@@ -42,18 +43,21 @@ CREATE TABLE `fish_club_db`.`biz_comment` (
 CREATE TABLE `fish_club_db`.`biz_fishing_spot` (
   `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT "主键ID",
   `name` VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT "钓点名称",
-  `type` BIGINT NOT NULL COMMENT "钓点类型，关联sys_dict_item.id",
+  `type_dict_type_code` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "钓点类型字典类型编码",
+  `type_dict_item_code` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "钓点类型字典项编码",
   `longitude` DECIMAL(10,6) NOT NULL COMMENT "经度 (高德/百度坐标)",
   `latitude` DECIMAL(10,6) NOT NULL COMMENT "纬度",
   `province` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "省",
   `city` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "市",
   `address` VARCHAR(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "详细地址",
   `price_desc` VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT '免费' COMMENT "收费描述",
-  `fish_info` JSON NULL COMMENT "常见鱼种，JSON数组存储鱼类百科ID(base_fish_encyclopedia.id)",
+  `fish_info_dict_type_code` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "常见鱼种字典类型编码",
+  `fish_info_dict_item_codes` JSON NULL COMMENT "常见鱼种字典项编码列表",
   `images` JSON NULL COMMENT "钓点图片列表 (JSON数组存储MinIO地址)",
   `best_position_desc` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "AI推荐的最佳钓位描述",
   `creator_id` BIGINT NULL COMMENT "创建人ID",
-  `status` BIGINT NULL DEFAULT 1 COMMENT "钓点状态，关联sys_dict_item.id",
+  `status_dict_type_code` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "钓点状态字典类型编码",
+  `status_dict_item_code` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "钓点状态字典项编码",
   `create_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP COMMENT "创建时间",
   `update_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0) COMMENT "更新时间",
   `is_deleted` TINYINT NULL DEFAULT 0 COMMENT "是否删除: 0-未删, 1-已删",
@@ -70,12 +74,14 @@ CREATE TABLE `fish_club_db`.`biz_gear_market` (
   `price` DECIMAL(10,2) NOT NULL COMMENT "价格",
   `original_price` DECIMAL(10,2) NULL COMMENT "原价",
   `images` JSON NULL COMMENT "商品图片",
-  `status` BIGINT NULL DEFAULT 1 COMMENT "商品状态，关联sys_dict_item.id",
+  `status_dict_type_code` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "商品状态字典类型编码",
+  `status_dict_item_code` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "商品状态字典项编码",
   `create_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP COMMENT "创建时间",
   `update_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0) COMMENT "更新时间",
   `is_deleted` TINYINT NULL DEFAULT 0 COMMENT "是否删除: 0-未删, 1-已删",
-  `category` BIGINT NULL COMMENT "装备分类，关联sys_dict_item.id",
-  INDEX `idx_category`(`category` ASC) USING BTREE,
+  `category_dict_type_code` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "装备分类字典类型编码",
+  `category_dict_item_code` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "装备分类字典项编码",
+  INDEX `idx_category_dict_item_code`(`category_dict_item_code` ASC) USING BTREE,
   INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
   PRIMARY KEY (`id`)
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci AUTO_INCREMENT = 1 ROW_FORMAT = Dynamic COMMENT = "二手装备交易表";
@@ -88,14 +94,16 @@ CREATE TABLE `fish_club_db`.`biz_gear_review` (
   `content` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT "测评内容",
   `rating` DECIMAL(2,1) NOT NULL COMMENT "评分 (1-5分)",
   `gear_name` VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT "装备名称",
-  `category` BIGINT NULL COMMENT "装备分类，关联sys_dict_item.id",
-  `status` BIGINT NULL DEFAULT 1 COMMENT "测评状态，关联sys_dict_item.id",
+  `category_dict_type_code` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "装备分类字典类型编码",
+  `category_dict_item_code` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "装备分类字典项编码",
+  `status_dict_type_code` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "测评状态字典类型编码",
+  `status_dict_item_code` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "测评状态字典项编码",
   `ai_analysis` JSON NULL COMMENT "AI分析结果",
   `create_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP COMMENT "创建时间",
   `update_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0) COMMENT "更新时间",
   `is_deleted` TINYINT NULL DEFAULT 0 COMMENT "是否删除: 0-未删, 1-已删",
   `images` JSON NULL COMMENT "测评图片 (JSON数组存储MinIO地址)",
-  INDEX `idx_category`(`category` ASC) USING BTREE,
+  INDEX `idx_category_dict_item_code`(`category_dict_item_code` ASC) USING BTREE,
   INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
   PRIMARY KEY (`id`)
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci AUTO_INCREMENT = 1 ROW_FORMAT = Dynamic COMMENT = "装备测评表";
@@ -108,7 +116,8 @@ CREATE TABLE `fish_club_db`.`biz_order` (
   `gear_title` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT "装备标题",
   `gear_price` DECIMAL(10,2) NOT NULL COMMENT "装备价格",
   `total_amount` DECIMAL(10,2) NOT NULL COMMENT "总金额",
-  `status` BIGINT NOT NULL DEFAULT 1 COMMENT "订单状态，关联sys_dict_item.id",
+  `status_dict_type_code` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "订单状态字典类型编码",
+  `status_dict_item_code` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "订单状态字典项编码",
   `address` VARCHAR(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT "收货地址",
   `contact_phone` VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT "联系电话",
   `create_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP COMMENT "创建时间",
@@ -123,24 +132,29 @@ CREATE TABLE `fish_club_db`.`biz_order` (
 CREATE TABLE `fish_club_db`.`biz_post` (
   `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT "主键ID",
   `user_id` BIGINT NOT NULL COMMENT "发布者ID",
-  `type` BIGINT NOT NULL COMMENT "帖子类型，关联sys_dict_item.id",
+  `type_dict_type_code` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "帖子类型字典类型编码",
+  `type_dict_item_code` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "帖子类型字典项编码",
   `title` VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "标题",
   `content` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "内容",
   `images` JSON NULL COMMENT "图片列表 (JSON数组存储MinIO地址)",
-  `fish_species` BIGINT NULL COMMENT "鱼种，关联base_fish_encyclopedia.id",
+  `fish_species_dict_type_code` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "鱼种字典类型编码",
+  `fish_species_dict_item_code` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "鱼种字典项编码",
   `fish_weight` DECIMAL(10,2) NULL DEFAULT 0.00 COMMENT "鱼获重量 (斤)",
   `spot_id` BIGINT NULL COMMENT "关联钓点ID (可选)",
   `address_name` VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "地理位置名称",
   `view_count` INT NULL DEFAULT 0 COMMENT "浏览量",
   `like_count` INT NULL DEFAULT 0 COMMENT "点赞量",
   `comment_count` INT NULL DEFAULT 0 COMMENT "评论量",
-  `ai_audit_status` BIGINT NULL DEFAULT 2 COMMENT "AI审核状态，关联sys_dict_item.id",
+  `ai_audit_status_dict_type_code` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "AI审核状态字典类型编码",
+  `ai_audit_status_dict_item_code` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "AI审核状态字典项编码",
   `ai_audit_reason` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "AI审核反馈原因",
+  `status_dict_type_code` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "状态字典类型编码",
+  `status_dict_item_code` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "状态字典项编码",
   `create_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP COMMENT "创建时间",
   `update_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0) COMMENT "更新时间",
   `is_deleted` TINYINT NULL DEFAULT 0 COMMENT "是否删除: 0-未删, 1-已删",
   `ai_comment` VARCHAR(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "AI安慰语（空军帖子专用）",
-  INDEX `idx_type`(`type` ASC) USING BTREE,
+  INDEX `idx_type_dict_item_code`(`type_dict_item_code` ASC) USING BTREE,
   INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
   PRIMARY KEY (`id`)
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci AUTO_INCREMENT = 1 ROW_FORMAT = Dynamic COMMENT = "社区帖子表";
@@ -179,10 +193,12 @@ CREATE TABLE `fish_club_db`.`biz_user_address` (
 CREATE TABLE `fish_club_db`.`sys_ai_log` (
   `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT "主键ID",
   `user_id` BIGINT NOT NULL COMMENT "调用用户ID",
-  `function_type` BIGINT NOT NULL COMMENT "功能类型，关联sys_dict_item.id",
+  `function_type_dict_type_code` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "功能类型字典类型编码",
+  `function_type_dict_item_code` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "功能类型字典项编码",
   `input_content` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "用户输入内容(简略)",
   `output_content` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "AI返回内容(简略)",
-  `status` BIGINT NULL DEFAULT 1 COMMENT "调用状态，关联sys_dict_item.id",
+  `status_dict_type_code` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "调用状态字典类型编码",
+  `status_dict_item_code` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "调用状态字典项编码",
   `create_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP COMMENT "创建时间",
   `update_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0) COMMENT "更新时间",
   `is_deleted` TINYINT NULL DEFAULT 0 COMMENT "是否删除: 0-未删, 1-已删",
@@ -238,8 +254,7 @@ CREATE TABLE `fish_club_db`.`sys_dict_item` (
   `is_deleted` TINYINT NULL DEFAULT 0 COMMENT "是否删除: 0-未删, 1-已删",
   UNIQUE INDEX `uk_dict_type_item` (`dict_type_id` ASC, `item_code` ASC) USING BTREE,
   INDEX `idx_dict_type_id` (`dict_type_id` ASC) USING BTREE,
-  PRIMARY KEY (`id`),
-  CONSTRAINT `fk_dict_item_type` FOREIGN KEY (`dict_type_id`) REFERENCES `sys_dict_type` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  PRIMARY KEY (`id`)
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci AUTO_INCREMENT = 1 ROW_FORMAT = Dynamic COMMENT = "数据字典项表";
 
 -- fish_club_db.sys_user DDL
@@ -251,10 +266,12 @@ CREATE TABLE `fish_club_db`.`sys_user` (
   `avatar` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "头像URL (MinIO)",
   `phone` VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "手机号",
   `signature` VARCHAR(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "个性签名",
-  `role` BIGINT NULL DEFAULT 1 COMMENT "角色，关联sys_dict_item.id",
+  `role_dict_type_code` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "角色字典类型编码",
+  `role_dict_item_code` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "角色字典项编码",
   `is_master` TINYINT NULL DEFAULT 0 COMMENT "是否认证大师: 0-否, 1-是",
   `exp_points` INT NULL DEFAULT 0 COMMENT "经验值 (用于等级)",
-  `status` BIGINT NULL DEFAULT 1 COMMENT "用户状态，关联sys_dict_item.id",
+  `status_dict_type_code` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "用户状态字典类型编码",
+  `status_dict_item_code` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "用户状态字典项编码",
   `create_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP COMMENT "创建时间",
   `update_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0) COMMENT "更新时间",
   `is_deleted` TINYINT NULL DEFAULT 0 COMMENT "是否删除: 0-未删, 1-已删",
@@ -273,8 +290,7 @@ CREATE TABLE `fish_club_db`.`sys_user_badge` (
   `is_deleted` TINYINT NULL DEFAULT 0 COMMENT "是否删除: 0-未删, 1-已删",
   INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
   INDEX `idx_badge_id`(`badge_id` ASC) USING BTREE,
-  PRIMARY KEY (`id`),
-  CONSTRAINT `fk_user_badge_badge` FOREIGN KEY (`badge_id`) REFERENCES `sys_badge_definition` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  PRIMARY KEY (`id`)
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci AUTO_INCREMENT = 1 ROW_FORMAT = Dynamic COMMENT = "用户勋章表";
 
 SET FOREIGN_KEY_CHECKS = 1;

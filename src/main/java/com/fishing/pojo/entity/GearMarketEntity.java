@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Data
 @TableName("biz_gear_market")
 public class GearMarketEntity {
-    @TableId(type = IdType.ASSIGN_ID)
+    @TableId(type = IdType.AUTO)
     private Long id;
     private Long userId;
     private String title;
@@ -19,9 +19,11 @@ public class GearMarketEntity {
     private BigDecimal price;
     private BigDecimal originalPrice;
     private String images;
-    private String category;
-    private Integer status;
+    private String statusDictTypeCode;
+    private String statusDictItemCode;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
     private Integer isDeleted;
+    private String categoryDictTypeCode;
+    private String categoryDictItemCode;
 }

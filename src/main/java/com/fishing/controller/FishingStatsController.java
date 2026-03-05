@@ -24,12 +24,17 @@ public class FishingStatsController {
     /**
      * 获取用户钓鱼统计数据
      * @param userId 用户ID
+     * @param catchTypeCode 鱼获战报类型字典项编码
+     * @param airForceTypeCode 空军吐槽类型字典项编码
      * @return 钓鱼统计数据
      */
     @GetMapping("/{userId}")
-    public Result<FishingStatsVO> getFishingStats(@PathVariable Long userId) {
-        log.info("获取用户钓鱼统计数据：userId={}", userId);
-        FishingStatsVO statsVO = fishingStatsService.getFishingStats(userId);
+    public Result<FishingStatsVO> getFishingStats(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "catch_report") String catchTypeCode,
+            @RequestParam(defaultValue = "air_force") String airForceTypeCode) {
+        log.info("获取用户钓鱼统计数据：userId={}, catchTypeCode={}, airForceTypeCode={}", userId, catchTypeCode, airForceTypeCode);
+        FishingStatsVO statsVO = fishingStatsService.getFishingStats(userId, catchTypeCode, airForceTypeCode);
         return Result.success(statsVO);
     }
 }

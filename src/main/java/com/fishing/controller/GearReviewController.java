@@ -23,9 +23,10 @@ public class GearReviewController {
     public Result<Page<GearReviewVO>> page(
             @RequestParam(defaultValue = "1") int pageNum,
             @RequestParam(defaultValue = "10") int pageSize,
-            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String categoryDictItemCode,
+            @RequestParam(required = false) String statusDictItemCode,
             @RequestParam(required = false) String keyword) {
-        Page<GearReviewVO> page = gearReviewService.page(pageNum, pageSize, category, keyword);
+        Page<GearReviewVO> page = gearReviewService.page(pageNum, pageSize, categoryDictItemCode, statusDictItemCode, keyword);
         return Result.success(page);
     }
 

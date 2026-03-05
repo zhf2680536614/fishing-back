@@ -7,27 +7,24 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Data
-@TableName("biz_comment")
-public class CommentEntity implements Serializable {
+@TableName("sys_dict_item")
+public class DictItemEntity implements Serializable {
     @TableId(type = IdType.AUTO)
     private Long id;
-
-    private Long postId;
-
-    private Long userId;
-
-    private Long parentId;
-
-    private String content;
-
-    private Integer isAiGenerated;
-
+    private Long dictTypeId;
+    private String itemCode;
+    private String itemName;
+    private String value;
+    private String description;
+    private Integer sortOrder;
+    private Integer status;
+    
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
-
+    
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
-
+    
     @TableLogic
     private Integer isDeleted;
 }

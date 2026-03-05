@@ -32,8 +32,8 @@ public class FishingSpotController {
      */
     @GetMapping("/recommend")
     public Result<List<FishingSpotVO>> getRecommendSpots(
-            @RequestParam(required = false) Integer type) {
-        List<FishingSpotVO> spots = fishingSpotService.getRecommendSpots(8, type);
+            @RequestParam(required = false) String typeDictItemCode) {
+        List<FishingSpotVO> spots = fishingSpotService.getRecommendSpots(8, typeDictItemCode);
         return Result.success(spots);
     }
 
@@ -43,8 +43,8 @@ public class FishingSpotController {
     @GetMapping("/search")
     public Result<List<FishingSpotVO>> searchSpots(
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) Integer type) {
-        List<FishingSpotVO> spots = fishingSpotService.searchSpots(keyword, type);
+            @RequestParam(required = false) String typeDictItemCode) {
+        List<FishingSpotVO> spots = fishingSpotService.searchSpots(keyword, typeDictItemCode);
         return Result.success(spots);
     }
 

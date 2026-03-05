@@ -19,4 +19,34 @@ public class AirForceCheckinDTO {
      * 现场照片URL列表
      */
     private List<String> images;
+    
+    /**
+     * 帖子类型字典类型编码
+     */
+    private String typeDictTypeCode;
+    
+    /**
+     * 帖子类型字典项编码
+     */
+    private String typeDictItemCode;
+    
+    /**
+     * AI审核状态字典类型编码
+     */
+    private String aiAuditStatusDictTypeCode;
+    
+    /**
+     * AI审核状态字典项编码
+     */
+    private String aiAuditStatusDictItemCode;
+    
+    /**
+     * 状态字典类型编码
+     */
+    private String statusDictTypeCode;
+    
+    /**
+     * 状态字典项编码
+     */
+    private String statusDictItemCode;
 }

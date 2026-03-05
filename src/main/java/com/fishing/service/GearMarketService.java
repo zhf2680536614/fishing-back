@@ -7,7 +7,7 @@ import com.fishing.pojo.vo.GearMarketVO;
 import java.util.List;
 
 public interface GearMarketService {
-    Page<GearMarketVO> page(int pageNum, int pageSize, String category, String keyword, String sortBy);
+    Page<GearMarketVO> page(int pageNum, int pageSize, String categoryDictItemCode, String statusDictItemCode, String keyword, String sortBy);
 
     GearMarketVO getById(Long id);
 
@@ -17,7 +17,7 @@ public interface GearMarketService {
 
     void delete(Long id, Long userId);
 
-    void updateStatus(Long id, Integer status, Long userId);
+    void updateStatus(Long id, String statusDictItemCode, Long userId);
 
     List<GearMarketVO> getUserGearList(Long userId);
 }

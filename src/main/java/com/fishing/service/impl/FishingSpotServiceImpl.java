@@ -47,11 +47,11 @@ public class FishingSpotServiceImpl extends ServiceImpl<FishingSpotMapper, Fishi
     }
 
     @Override
-    public List<FishingSpotVO> getRecommendSpots(int limit, Integer type) {
+    public List<FishingSpotVO> getRecommendSpots(int limit, String typeDictItemCode) {
         LambdaQueryWrapper<FishingSpotEntity> wrapper = new LambdaQueryWrapper<>();
         // 如果指定了类型，添加类型筛选
-        if (type != null) {
-            wrapper.eq(FishingSpotEntity::getType, type);
+        if (typeDictItemCode != null && !typeDictItemCode.isEmpty()) {
+            wrapper.eq(FishingSpotEntity::getTypeDictItemCode, typeDictItemCode);
         }
         
         List<FishingSpotEntity> entities = this.list(wrapper);
@@ -72,7 +72,7 @@ public class FishingSpotServiceImpl extends ServiceImpl<FishingSpotMapper, Fishi
     }
 
     @Override
-    public List<FishingSpotVO> searchSpots(String keyword, Integer type) {
+    public List<FishingSpotVO> searchSpots(String keyword, String typeDictItemCode) {
         LambdaQueryWrapper<FishingSpotEntity> wrapper = new LambdaQueryWrapper<>();
         
         // 关键词模糊匹配（名称、地址、鱼种）
@@ -82,7 +82,7 @@ public class FishingSpotServiceImpl extends ServiceImpl<FishingSpotMapper, Fishi
                     .or()
                     .like(FishingSpotEntity::getAddress, keyword)
                     .or()
-                    .like(FishingSpotEntity::getFishInfo, keyword)
+                    .like(FishingSpotEntity::getFishInfoDictItemCodes, keyword)
                     .or()
                     .like(FishingSpotEntity::getProvince, keyword)
                     .or()
@@ -91,8 +91,8 @@ public class FishingSpotServiceImpl extends ServiceImpl<FishingSpotMapper, Fishi
         }
         
         // 类型筛选
-        if (type != null) {
-            wrapper.eq(FishingSpotEntity::getType, type);
+        if (typeDictItemCode != null && !typeDictItemCode.isEmpty()) {
+            wrapper.eq(FishingSpotEntity::getTypeDictItemCode, typeDictItemCode);
         }
 
         List<FishingSpotEntity> entities = this.list(wrapper);
@@ -121,25 +121,9 @@ public class FishingSpotServiceImpl extends ServiceImpl<FishingSpotMapper, Fishi
         vo.setPrice(entity.getPriceDesc());
         vo.setAiRecommendation(entity.getBestPositionDesc());
 
-        // 根据数据库type字段判断类型 0-野钓, 1-黑坑/收费, 2-路亚基地
-        Integer type = entity.getType();
-        if (type != null) {
-            switch (type) {
-                case 0 -> vo.setType("wild");
-                case 1 -> vo.setType("paid");
-                case 2 -> vo.setType("lure");
-                default -> vo.setType("wild");
-            }
-        } else {
-            // 兼容旧数据，根据价格判断
-            if (entity.getPriceDesc() != null && entity.getPriceDesc().contains("免费")) {
-                vo.setType("wild");
-            } else if (entity.getPriceDesc() != null && entity.getPriceDesc().contains("元")) {
-                vo.setType("paid");
-            } else {
-                vo.setType("lure");
-            }
-        }
+        // 使用数据字典项编码设置类型
+        String typeDictItemCode = entity.getTypeDictItemCode();
+        vo.setType(typeDictItemCode != null ? typeDictItemCode : "wild");
 
         // 模拟评分和距离
         vo.setRating(4.0 + new Random().nextDouble() * 1.0);

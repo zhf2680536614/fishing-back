@@ -15,8 +15,11 @@ public class UserVO implements Serializable {
     private String avatar;
     private String phone;
     private String signature;
-    private Integer role;
+    private String roleDictTypeCode;
+    private String roleDictItemCode;
     private Integer isMaster;
     private Integer expPoints;
+    private String statusDictTypeCode;
+    private String statusDictItemCode;
     private String token;
 }

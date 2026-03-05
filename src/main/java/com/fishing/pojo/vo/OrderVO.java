@@ -17,7 +17,7 @@ public class OrderVO {
     private String gearImages;
     private BigDecimal gearPrice;
     private BigDecimal totalAmount;
-    private Integer status;
+    private String statusDictItemCode;
     private String statusText;
     private String address;
     private String contactPhone;

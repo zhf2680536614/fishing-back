@@ -43,10 +43,11 @@ public class AirForceController {
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize,
             @RequestParam(defaultValue = "newest") String sortType,
+            @RequestParam(defaultValue = "air_force") String typeDictItemCode,
             HttpServletRequest request) {
         Long userId = getCurrentUserId(request);
-        log.info("获取空军帖子列表，页码：{}，每页大小：{}，排序：{}，用户ID：{}", pageNum, pageSize, sortType, userId);
-        List<AirForcePostVO> list = airForceService.getPostList(pageNum, pageSize, sortType, userId);
+        log.info("获取空军帖子列表，页码：{}，每页大小：{}，排序：{}，类型：{}，用户ID：{}", pageNum, pageSize, sortType, typeDictItemCode, userId);
+        List<AirForcePostVO> list = airForceService.getPostList(pageNum, pageSize, sortType, typeDictItemCode, userId);
         return Result.success(list);
     }
 
@@ -54,10 +55,13 @@ public class AirForceController {
      * 获取空军统计数据
      */
     @GetMapping("/stats")
-    public Result<AirForceStatsVO> getStats(HttpServletRequest request) {
+    public Result<AirForceStatsVO> getStats(
+            @RequestParam(defaultValue = "air_force") String airForceTypeCode,
+            @RequestParam(defaultValue = "catch_report") String catchTypeCode,
+            HttpServletRequest request) {
         Long userId = getCurrentUserId(request);
-        log.info("获取空军统计数据，用户ID：{}", userId);
-        AirForceStatsVO stats = airForceService.getStats(userId);
+        log.info("获取空军统计数据，用户ID：{}，空军类型：{}，鱼获类型：{}", userId, airForceTypeCode, catchTypeCode);
+        AirForceStatsVO stats = airForceService.getStats(userId, airForceTypeCode, catchTypeCode);
         return Result.success(stats);
     }
 

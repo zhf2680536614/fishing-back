@@ -26,18 +26,21 @@ public interface AirForceService {
      * @param pageNum  页码
      * @param pageSize 每页大小
      * @param sortType 排序类型：newest-最新，hottest-最热
+     * @param typeDictItemCode 帖子类型字典项编码
      * @param userId   当前用户ID（用于判断是否点赞）
      * @return 帖子列表
      */
-    List<AirForcePostVO> getPostList(Integer pageNum, Integer pageSize, String sortType, Long userId);
+    List<AirForcePostVO> getPostList(Integer pageNum, Integer pageSize, String sortType, String typeDictItemCode, Long userId);
     
     /**
      * 获取空军统计数据
      *
      * @param userId 用户ID
+     * @param airForceTypeCode 空军类型字典项编码
+     * @param catchTypeCode 鱼获战报类型字典项编码
      * @return 统计数据
      */
-    AirForceStatsVO getStats(Long userId);
+    AirForceStatsVO getStats(Long userId, String airForceTypeCode, String catchTypeCode);
     
     /**
      * 点赞/取消点赞

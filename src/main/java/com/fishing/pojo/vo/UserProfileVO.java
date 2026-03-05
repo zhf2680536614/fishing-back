@@ -15,7 +15,8 @@ public class UserProfileVO implements Serializable {
     private String avatar;
     private String phone;
     private String signature;
-    private Integer role;
+    private String roleDictTypeCode;
+    private String roleDictItemCode;
     private Integer isMaster;
     private Integer expPoints;
     private Integer level;

@@ -39,11 +39,11 @@ public class PostController {
      */
     @GetMapping("/list")
     public Result<List<PostVO>> getPostList(
-            @RequestParam(defaultValue = "0") Integer type,
+            @RequestParam(defaultValue = "catch_report") String typeDictItemCode,
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize) {
-        log.info("获取帖子列表，类型：{}，页码：{}，每页数量：{}", type, pageNum, pageSize);
-        List<PostVO> list = postService.getPostList(type, pageNum, pageSize);
+        log.info("获取帖子列表，类型：{}，页码：{}，每页数量：{}", typeDictItemCode, pageNum, pageSize);
+        List<PostVO> list = postService.getPostList(typeDictItemCode, pageNum, pageSize);
         return Result.success(list);
     }
 

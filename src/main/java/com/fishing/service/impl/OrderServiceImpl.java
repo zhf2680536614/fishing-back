@@ -34,7 +34,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderEntity> impl
         if (gear == null) {
             throw new BusinessException("装备不存在");
         }
-        if (gear.getStatus() != 0) {
+        if (!"on_sale".equals(gear.getStatusDictItemCode())) {
             throw new BusinessException("装备已下架或已售出");
         }
         // 检查是否是自己的商品
@@ -52,7 +52,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderEntity> impl
         order.setGearTitle(gear.getTitle());
         order.setGearPrice(gear.getPrice());
         order.setTotalAmount(totalAmount);
-        order.setStatus(0); // 待付款
+        order.setStatusDictTypeCode(dto.getStatusDictTypeCode());
+        order.setStatusDictItemCode(dto.getStatusDictItemCode());
         order.setAddress(dto.getAddress());
         order.setContactPhone(dto.getContactPhone());
         order.setIsDeleted(0);
@@ -61,7 +62,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderEntity> impl
         this.save(order);
 
         // 5. 更新装备状态为已售出
-        gear.setStatus(1);
+        gear.setStatusDictItemCode("sold");
         gearMarketMapper.updateById(gear);
 
         // 6. 转换为VO返回
@@ -97,11 +98,11 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderEntity> impl
         if (!order.getUserId().equals(userId)) {
             throw new BusinessException("无权操作此订单");
         }
-        if (order.getStatus() != 0) {
+        if (!"unpaid".equals(order.getStatusDictItemCode())) {
             throw new BusinessException("订单状态不正确");
         }
         
-        order.setStatus(1);
+        order.setStatusDictItemCode("paid");
         order.setUpdateTime(new Date());
         this.updateById(order);
     }
@@ -116,7 +117,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderEntity> impl
         if (!order.getUserId().equals(userId)) {
             throw new BusinessException("无权操作此订单");
         }
-        if (order.getStatus() == 2) {
+        if ("shipped".equals(order.getStatusDictItemCode())) {
             throw new BusinessException("已发货的订单不能删除");
         }
         
@@ -140,12 +141,12 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderEntity> impl
     public void autoCompleteOrders() {
         Date thirtyMinutesAgo = new Date(System.currentTimeMillis() - 30 * 60 * 1000);
         LambdaQueryWrapper<OrderEntity> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(OrderEntity::getStatus, 1)
+        wrapper.eq(OrderEntity::getStatusDictItemCode, "paid")
                .lt(OrderEntity::getUpdateTime, thirtyMinutesAgo);
         List<OrderEntity> orders = this.list(wrapper);
         
         for (OrderEntity order : orders) {
-            order.setStatus(3);
+            order.setStatusDictItemCode("completed");
             order.setUpdateTime(new Date());
             this.updateById(order);
         }
@@ -155,13 +156,19 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderEntity> impl
         OrderVO vo = new OrderVO();
         BeanUtils.copyProperties(order, vo);
         // 转换状态为文本
-        switch (order.getStatus()) {
-            case 0: vo.setStatusText("待付款"); break;
-            case 1: vo.setStatusText("已付款"); break;
-            case 2: vo.setStatusText("已发货"); break;
-            case 3: vo.setStatusText("已完成"); break;
-            case 4: vo.setStatusText("已取消"); break;
-            default: vo.setStatusText("未知");
+        String statusCode = order.getStatusDictItemCode();
+        if ("unpaid".equals(statusCode)) {
+            vo.setStatusText("待付款");
+        } else if ("paid".equals(statusCode)) {
+            vo.setStatusText("已付款");
+        } else if ("shipped".equals(statusCode)) {
+            vo.setStatusText("已发货");
+        } else if ("completed".equals(statusCode)) {
+            vo.setStatusText("已完成");
+        } else if ("cancelled".equals(statusCode)) {
+            vo.setStatusText("已取消");
+        } else {
+            vo.setStatusText("未知");
         }
         // 获取装备图片
         if (order.getGearId() != null) {
