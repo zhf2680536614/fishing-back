@@ -18,7 +18,7 @@ public class FishEncyclopediaEntity {
     private Integer protectionLevel;
     private String habits;
     private String edibleValue;
-    private String imgUrl;
+    private String images;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
     private Integer isDeleted;

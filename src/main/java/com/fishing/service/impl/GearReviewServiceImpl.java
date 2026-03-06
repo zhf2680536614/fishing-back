@@ -321,6 +321,9 @@ public class GearReviewServiceImpl implements GearReviewService {
             vo.setUsername(user.getUsername());
             vo.setNickname(user.getNickname());
             vo.setAvatar(minioUtils.getFullUrl(user.getAvatar(), "user_avatar"));
+            // 兼容前端字段
+            vo.setUserNickname(user.getNickname());
+            vo.setUserAvatar(minioUtils.getFullUrl(user.getAvatar(), "user_avatar"));
         }
 
         // 解析图片JSON

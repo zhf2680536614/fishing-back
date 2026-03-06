@@ -117,4 +117,38 @@ public class FileController {
             return Result.error("上传失败：" + e.getMessage());
         }
     }
+
+    /**
+     * 上传鱼类图片
+     */
+    @PostMapping("/upload/fish")
+    public Result<String> uploadFishImage(@RequestParam("file") MultipartFile file) {
+        log.info("上传鱼类图片，文件名：{}，大小：{}", file.getOriginalFilename(), file.getSize());
+        try {
+            String url = minioUtils.uploadFishImage(file);
+            log.info("上传成功，URL：{}", url);
+            return Result.success(url);
+        } catch (Exception e) {
+            log.error("上传失败", e);
+            return Result.error("上传失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 批量上传鱼类图片
+     */
+    @PostMapping("/upload/fish/batch")
+    public Result<java.util.List<String>> uploadFishImages(@RequestParam("files") MultipartFile[] files) {
+        log.info("批量上传鱼类图片，数量：{}", files.length);
+        java.util.List<String> urls = new java.util.ArrayList<>();
+        for (MultipartFile file : files) {
+            try {
+                String url = minioUtils.uploadFishImage(file);
+                urls.add(url);
+            } catch (Exception e) {
+                log.error("上传文件失败：{}，错误：{}", file.getOriginalFilename(), e.getMessage());
+            }
+        }
+        return Result.success(urls);
+    }
 }

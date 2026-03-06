@@ -19,5 +19,5 @@ public class FishVO {
 
     private String edibleValue;
 
-    private String imgUrl;
+    private String images;
 }

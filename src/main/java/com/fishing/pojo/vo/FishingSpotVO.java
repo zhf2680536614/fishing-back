@@ -19,4 +19,5 @@ public class FishingSpotVO {
     private Double distance;
     private String image;
     private List<String> images;
+    private List<String> fishInfoDictItemCodes;
 }

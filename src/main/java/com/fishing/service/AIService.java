@@ -281,12 +281,12 @@ public class AIService {
     /**
      * AI 分析钓点 - 流式输出
      * @param spotName 钓点名称
-     * @param spotType 钓点类型（0-野钓，1-黑坑，2-路亚）
+     * @param spotType 钓点类型（字符串代码）
      * @param address 地址
      * @param fishInfo 鱼种信息
      * @return SseEmitter
      */
-    public SseEmitter analyzeSpot(String spotName, Integer spotType, String address, String fishInfo) {
+    public SseEmitter analyzeSpot(String spotName, String spotType, String address, String fishInfo) {
         SseEmitter emitter = new SseEmitter(60000L); // 1分钟超时
 
         executorService.execute(() -> {
@@ -403,12 +403,12 @@ public class AIService {
     /**
      * 获取钓点类型文本
      */
-    private String getSpotTypeText(Integer spotType) {
+    private String getSpotTypeText(String spotType) {
         if (spotType == null) return "未知类型";
         return switch (spotType) {
-            case 0 -> "野钓点";
-            case 1 -> "黑坑/收费钓场";
-            case 2 -> "路亚基地";
+            case "wild" -> "野钓点";
+            case "pay" -> "黑坑/收费钓场";
+            case "lure_base" -> "路亚基地";
             default -> "未知类型";
         };
     }

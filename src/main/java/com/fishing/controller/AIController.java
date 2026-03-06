@@ -45,7 +45,7 @@ public class AIController {
     @GetMapping(value = "/analyze-spot", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter analyzeSpot(
             @RequestParam(required = false) String spotName,
-            @RequestParam(required = false) Integer spotType,
+            @RequestParam(required = false) String spotType,
             @RequestParam(required = false) String address,
             @RequestParam(required = false) String fishInfo) {
         log.info("收到 AI 分析钓点请求: {} - {}", spotName, spotType);

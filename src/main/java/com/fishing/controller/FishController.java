@@ -3,8 +3,8 @@ package com.fishing.controller;
 import com.fishing.pojo.Result;
 import com.fishing.pojo.PageResult;
 import com.fishing.pojo.dto.FishEncyclopediaDTO;
-import com.fishing.pojo.entity.FishEncyclopediaEntity;
 import com.fishing.pojo.query.FishEncyclopediaPageQuery;
+import com.fishing.pojo.vo.FishManageVO;
 import com.fishing.service.FishService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -24,9 +24,9 @@ public class FishController {
      * 分页查询鱼类百科列表（管理后台）
      */
     @PostMapping("/manage/page")
-    public Result<PageResult<FishEncyclopediaEntity>> pageFish(@RequestBody FishEncyclopediaPageQuery query) {
+    public Result<PageResult<FishManageVO>> pageFish(@RequestBody FishEncyclopediaPageQuery query) {
         log.info("分页查询鱼类百科列表（管理后台）：{}", query);
-        PageResult<FishEncyclopediaEntity> pageResult = fishService.pageFish(query);
+        PageResult<FishManageVO> pageResult = fishService.pageFish(query);
         return Result.success(pageResult);
     }
 
@@ -34,9 +34,9 @@ public class FishController {
      * 根据ID获取鱼类百科详情（管理后台）
      */
     @GetMapping("/manage/{id}")
-    public Result<FishEncyclopediaEntity> getFishById(@PathVariable Long id) {
+    public Result<FishManageVO> getFishById(@PathVariable Long id) {
         log.info("获取鱼类百科详情（管理后台）：{}", id);
-        FishEncyclopediaEntity fish = fishService.getFishById(id);
+        FishManageVO fish = fishService.getFishById(id);
         if (fish == null) {
             return Result.error("鱼类百科不存在");
         }

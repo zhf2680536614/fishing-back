@@ -38,6 +38,24 @@ public class MinioUtils {
     @Value("${file.gear-image-dir:gear_image}")
     private String gearImageDir;
 
+    @Value("${file.fish-image-dir:fish_image}")
+    private String fishImageDir;
+
+    @PostConstruct
+    public void init() {
+        // 确保目录配置有默认值
+        if (spotImageDir == null || spotImageDir.isEmpty()) {
+            spotImageDir = "spot_image";
+        }
+        if (gearImageDir == null || gearImageDir.isEmpty()) {
+            gearImageDir = "gear_image";
+        }
+        if (fishImageDir == null || fishImageDir.isEmpty()) {
+            fishImageDir = "fish_image";
+        }
+        log.info("MinIO文件目录配置 - spot: {}, gear: {}, fish: {}", spotImageDir, gearImageDir, fishImageDir);
+    }
+
     public MinioUtils(MinioClient minioClient) {
         this.minioClient = minioClient;
     }
@@ -104,6 +122,13 @@ public class MinioUtils {
      */
     public String uploadGearImage(MultipartFile file) {
         return uploadFile(file, gearImageDir);
+    }
+
+    /**
+     * 上传鱼类图片
+     */
+    public String uploadFishImage(MultipartFile file) {
+        return uploadFile(file, fishImageDir);
     }
 
     /**

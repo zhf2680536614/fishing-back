@@ -174,10 +174,11 @@ public class FishEncyclopediaServiceImpl extends ServiceImpl<FishEncyclopediaMap
         BeanUtils.copyProperties(entity, vo);
         vo.setIsProtected(entity.getProtectionLevel() != null && entity.getProtectionLevel() == 1);
 
-        if (entity.getImgUrl() != null && !entity.getImgUrl().isEmpty()) {
-            vo.setImgUrl(minioUtils.getFullUrl(entity.getImgUrl(), FISH_IMAGE_DIR));
+        // 解析图片列表并拼接完整URL
+        if (entity.getImages() != null && !entity.getImages().isEmpty()) {
+            vo.setImages(parseImages(entity.getImages()));
         } else {
-            vo.setImgUrl("");
+            vo.setImages("[]");
         }
 
         return vo;
@@ -191,7 +192,24 @@ public class FishEncyclopediaServiceImpl extends ServiceImpl<FishEncyclopediaMap
         vo.setIsProtected(false);
         vo.setHabits("暂无该鱼类的详细信息");
         vo.setEdibleValue("暂无该鱼类的食用价值信息");
-        vo.setImgUrl("");
+        vo.setImages("[]");
         return vo;
+    }
+
+    /**
+     * 解析图片JSON字符串并拼接完整URL
+     */
+    private String parseImages(String imagesJson) {
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            java.util.List<String> images = mapper.readValue(imagesJson, new com.fasterxml.jackson.core.type.TypeReference<java.util.List<String>>() {});
+            java.util.List<String> fullUrls = images.stream()
+                    .map(img -> minioUtils.getFullUrl(img, FISH_IMAGE_DIR))
+                    .collect(java.util.stream.Collectors.toList());
+            return mapper.writeValueAsString(fullUrls);
+        } catch (Exception e) {
+            log.error("解析鱼类图片失败: {}", imagesJson, e);
+            return "[]";
+        }
     }
 }

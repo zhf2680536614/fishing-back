@@ -18,6 +18,9 @@ import com.fishing.pojo.vo.FishingSpotVO;
 import com.fishing.service.DictService;
 import com.fishing.service.FishingSpotService;
 import com.fishing.utils.MinioUtils;
+
+import lombok.extern.slf4j.Slf4j;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.BeanUtils;
@@ -34,6 +37,7 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class FishingSpotServiceImpl extends ServiceImpl<FishingSpotMapper, FishingSpotEntity> implements FishingSpotService {
 
     @Autowired
@@ -156,6 +160,10 @@ public class FishingSpotServiceImpl extends ServiceImpl<FishingSpotMapper, Fishi
         } else {
             vo.setImage("https://images.unsplash.com/photo-1507525428034-b723cf96123e?w=800&auto=format&fit=crop");
         }
+
+        // 解析鱼种列表
+        List<String> fishInfoCodes = parseFishInfoCodes(entity.getFishInfoDictItemCodes());
+        vo.setFishInfoDictItemCodes(fishInfoCodes);
 
         return vo;
     }
@@ -341,23 +349,40 @@ public class FishingSpotServiceImpl extends ServiceImpl<FishingSpotMapper, Fishi
     private FishingSpotManageVO convertToManageVO(FishingSpotEntity entity) {
         FishingSpotManageVO vo = new FishingSpotManageVO();
         BeanUtils.copyProperties(entity, vo);
-        
+
         // 设置类型名称
         if (StringUtils.hasText(entity.getTypeDictItemCode())) {
             vo.setTypeDictItemName(dictService.getItemName(entity.getTypeDictTypeCode(), entity.getTypeDictItemCode()));
         }
-        
+
         // 设置状态名称
         if (StringUtils.hasText(entity.getStatusDictItemCode())) {
             vo.setStatusDictItemName(dictService.getItemName(entity.getStatusDictTypeCode(), entity.getStatusDictItemCode()));
         }
-        
+
         // 解析图片列表
         vo.setImages(parseImages(entity.getImages()));
-        
+
         // 解析鱼种列表
-        vo.setFishInfoDictItemCodes(parseFishInfoCodes(entity.getFishInfoDictItemCodes()));
-        
+        List<String> fishInfoCodes = parseFishInfoCodes(entity.getFishInfoDictItemCodes());
+        vo.setFishInfoDictItemCodes(fishInfoCodes);
+
+        // 设置鱼种名称列表
+        if (fishInfoCodes != null && !fishInfoCodes.isEmpty()) {
+            log.info("解析鱼种列表: {}, 鱼种类型编码: {}", fishInfoCodes.toString(), entity.getFishInfoDictTypeCode());
+            List<String> fishInfoNames = fishInfoCodes.stream()
+                    .map(code -> {
+                        String name = dictService.getItemName(entity.getFishInfoDictTypeCode(), code);
+                        log.info("鱼种代码: {}, 名称: {}", code, name);
+                        return name;
+                    })
+                    .collect(Collectors.toList());
+            vo.setFishInfoDictItemNames(fishInfoNames);
+            log.info("最终鱼种名称列表: {}", fishInfoNames.toString());
+        } else {
+            log.warn("鱼种列表为空: {}", fishInfoCodes != null ? fishInfoCodes.toString() : "null");
+        }
+
         // 获取创建者名称
         if (entity.getCreatorId() != null) {
             UserEntity user = userMapper.selectById(entity.getCreatorId());
@@ -365,7 +390,7 @@ public class FishingSpotServiceImpl extends ServiceImpl<FishingSpotMapper, Fishi
                 vo.setCreatorName(user.getNickname());
             }
         }
-        
+
         return vo;
     }
 

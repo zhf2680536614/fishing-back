@@ -15,6 +15,8 @@ public class GearReviewManageVO implements Serializable {
     private String username;
     private String nickname;
     private String avatar;
+    private String userNickname;
+    private String userAvatar;
     private String title;
     private String content;
     private BigDecimal rating;

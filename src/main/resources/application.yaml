@@ -49,6 +49,9 @@ minio:
 
 # 文件访问配置
 file:
-  base-url: ${file.base-url}
-  post-image-dir: ${file.post-image-dir}
-  user-avatar-dir: ${file.user-avatar-dir}
+  base-url: ${file.base-url:http://localhost:8080}
+  post-image-dir: ${file.post-image-dir:post_image}
+  user-avatar-dir: ${file.user-avatar-dir:user_avatar}
+  spot-image-dir: ${file.spot-image-dir:spot_image}
+  gear-image-dir: ${file.gear-image-dir:gear_image}
+  fish-image-dir: ${file.fish-image-dir:fish_image}

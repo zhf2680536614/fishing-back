@@ -15,7 +15,7 @@ CREATE TABLE `fish_club_db`.`base_fish_encyclopedia` (
   `protection_level` TINYINT NULL DEFAULT 0 COMMENT "保护级别: 0-普通, 1-保护动物(需放流)",
   `habits` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "生活习性",
   `edible_value` VARCHAR(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "食用价值",
-  `img_url` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT "标准图鉴",
+  `images` JSON NULL COMMENT "鱼类图片列表 (JSON数组存储MinIO地址)",
   `create_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP COMMENT "创建时间",
   `update_time` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0) COMMENT "更新时间",
   `is_deleted` TINYINT NULL DEFAULT 0 COMMENT "是否删除: 0-未删, 1-已删",

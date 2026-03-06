@@ -10,5 +10,5 @@ public class FishEncyclopediaDTO {
     private Integer protectionLevel;
     private String habits;
     private String edibleValue;
-    private String imgUrl;
+    private String images;
 }
